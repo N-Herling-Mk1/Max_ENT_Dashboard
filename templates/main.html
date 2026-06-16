@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/helix.css?v=5">
+</head>
+<body>
+<div class="wrap dash">
+  <div class="dash-main">
+
+    <div class="panel" id="sec-control">
+      <div class="ph"><span class="dot"></span><h2>control</h2></div>
+      <div class="controls">
+        <span><label>region</label>
+          <select id="region"><option value="barrel">barrel</option><option value="endcap">endcap</option></select></span>
+        <span><label>agreement on</label>
+          <select id="agsample"><option value="signal">signal</option><option value="background">background</option></select></span>
+        <button class="btn run" id="run">▶ GENERATE / RUN TEST</button>
+        <button class="btn" id="reload-data">↻ RELOAD DATA</button>
+        <span class="status" id="status">idle — load real CSVs into <code>data/</code> or run the bundled sample.</span>
+      </div>
+    </div>
+
+    <div class="panel" id="sec-data">
+      <div class="ph"><span class="dot"></span><h2>data view-frame</h2>
+        <span style="margin-left:auto">
+          <select id="dfile"><option value="background">background</option><option value="signal">signal</option></select>
+        </span></div>
+      <div class="grid g2">
+        <div><h3>summary stats</h3><div id="stats"><div class="empty">load data…</div></div></div>
+        <div><h3>preview</h3><div id="preview" style="overflow:auto;max-height:260px"><div class="empty">load data…</div></div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="sec-ladder">
+      <div class="ph"><span class="dot"></span><h2>dependence ladder &mdash; signal vs background</h2></div>
+      <div class="cards" id="ladder"><div class="empty" style="grid-column:1/-1">run the test to populate</div></div>
+      <div class="muted" style="font-size:11px;margin-top:8px">
+        <span style="color:var(--sig)">■</span> signal &nbsp; <span style="color:var(--bg-c)">■</span> background &nbsp;·&nbsp;
+        linear r ⊂ dCor ⊂ closure (2-bin MI) ⊂ I (full MI, σ vs permutation null)
+      </div>
+    </div>
+
+    <div class="panel" id="sec-planes">
+      <div class="ph"><span class="dot"></span><h2>the planes &mdash; where I lives</h2></div>
+      <div class="grid g3" id="plots"><div class="empty" style="grid-column:1/-1">run the test to populate</div></div>
+    </div>
+
+    <div class="panel" id="sec-agreement">
+      <div class="ph"><span class="dot"></span><h2>method agreement &mdash; ABCD &times; MaxEnt</h2>
+        <span class="status" id="ag-meta" style="margin-left:auto"></span></div>
+      <div id="matrix"><div class="empty">run the test to populate</div></div>
+    </div>
+
+    <div class="panel" id="sec-jumpers">
+      <div class="ph"><span class="dot"></span><h2>boundary jumpers &mdash; what crosses</h2></div>
+      <div class="grid g2" id="jumpers"><div class="empty" style="grid-column:1/-1">run the test to populate</div></div>
+    </div>
+
+  </div>
+
+  <aside class="toc">
+    <div class="toc-h">ON THIS PAGE</div>
+    <a data-target="sec-control" class="active">control</a>
+    <a data-target="sec-data">data view-frame</a>
+    <a data-target="sec-ladder">dependence ladder</a>
+    <a data-target="sec-planes">the planes</a>
+    <a data-target="sec-agreement">method agreement</a>
+    <a data-target="sec-jumpers">boundary jumpers</a>
+  </aside>
+</div>
+<script src="/static/js/main.js?v=5"></script>
+</body>
+</html>

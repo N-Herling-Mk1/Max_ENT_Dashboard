@@ -1,0 +1,45 @@
+/* ══════════════════════════════════════════════════════════════════
+   references — light document theme (overrides helix.css on this page)
+   white bg · black text · highlights teal + blue · normal + flair
+   ════════════════════════════════════════════════════════════════ */
+body{background:#ffffff !important;color:#111418 !important;background-image:none !important;
+  font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body::before{display:none !important}
+
+.refpage{width:80%;max-width:80%;margin:0 auto;padding:44px 0 90px}
+
+.ref-head{border-bottom:2px solid #2563eb;padding-bottom:18px;margin-bottom:28px}
+.ref-head .kicker{font-family:"Orbitron",sans-serif;font-size:11px;letter-spacing:.28em;
+  color:#0d9488;text-transform:uppercase;margin-bottom:9px}
+.ref-head h1{font-family:"Orbitron",sans-serif;font-weight:700;font-size:30px;color:#0f172a;
+  margin:0;line-height:1.15}
+.ref-head .lead{color:#475569;font-size:14.5px;margin:12px 0 0;max-width:62ch;line-height:1.6}
+
+.refpage section{margin:30px 0}
+.refpage h2,.refpage h3{font-family:"Orbitron",sans-serif;font-weight:500;color:#0f172a;
+  letter-spacing:.04em;border-left:4px solid #14b8a6;padding-left:12px;margin:0 0 14px;text-transform:none}
+.refpage h2{font-size:15px} .refpage h3{font-size:13px;border-left-color:#2563eb;color:#1e3a8a}
+
+.refpage table{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;
+  border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05);
+  margin-bottom:8px}
+.refpage th{background:#2563eb;color:#fff;font-family:"Orbitron",sans-serif;font-weight:500;
+  font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;text-align:left;padding:11px 14px;border:0}
+.refpage td{padding:11px 14px;border-top:1px solid #eef2f7;color:#1f2937;vertical-align:top;border-bottom:0}
+.refpage tbody tr:nth-child(even){background:#f8fafc}
+.refpage tbody tr:hover{background:#ecfdf7}                      /* teal tint */
+.refpage td.muted,.refpage .muted{color:#64748b !important}
+.refpage td.num{color:#0d9488;text-align:right;font-family:"Share Tech Mono",monospace}
+.refpage td.law,.refpage .law{font-family:"Share Tech Mono",monospace;color:#0d9488;font-weight:700;
+  white-space:nowrap}
+
+.refpage .tag{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;
+  font-family:-apple-system,"Segoe UI",sans-serif;letter-spacing:0}
+.refpage .tag.ok{background:#ccfbf1;color:#0f766e}              /* teal — solid */
+.refpage .tag.warn{background:#dbeafe;color:#1d4ed8}            /* blue — qualifier */
+
+.ref-note{margin-top:26px;background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;
+  border-radius:10px;padding:16px 18px;color:#1e293b;font-size:13.5px;line-height:1.65}
+.refpage code{background:#f1f5f9;color:#0d9488;padding:1px 5px;border-radius:4px;
+  font-family:"Share Tech Mono",monospace}
+.refpage .empty{color:#94a3b8}

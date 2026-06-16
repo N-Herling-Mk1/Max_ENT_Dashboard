@@ -1,0 +1,28 @@
+{
+  "qa": [
+    {"cat": "concept", "q": "Is the mutual information the orthogonal piece?",
+     "a": "Yes. The MaxEnt background p₀ (product of marginals) is the information projection of the data onto the independence manifold; the MI is the residual of that projection, reached orthogonally (Csiszár–Pythagoras). The MI is the perpendicular; p₀ is the foot of it. The background is NOT orthogonal to the data — data ≈ background since signal is small."},
+    {"cat": "concept", "q": "Is MI a single number?",
+     "a": "Yes — one scalar per class, a functional of the joint distribution. You compare I_signal vs I_background (two numbers) and visualize where it comes from via the pmi field. There is no per-event MI cloud to overlay."},
+    {"cat": "concept", "q": "If signal and background share marginals, is there no separation in the data cloud?",
+     "a": "Correct for the marginals — they overlap exactly, and the marginal detector −log p₀ is blind. The separation has moved into the joint: it shows as a shape/tilt difference in the 2D cloud and is recovered per-event by the pmi (mean gap = the MI)."},
+    {"cat": "concept", "q": "Why is the barrel's tiny r_D not enough?",
+     "a": "Pearson r is the linear shadow of the dependence. The barrel breaks closure (1.79) at r_D≈−0.055 because the dependence is nonlinear — invisible to r, visible to dCor, closure (2-bin MI) and full I. The correct closure diagnostic was always MI, not r."},
+    {"cat": "method", "q": "What is the MaxEnt technique, in one paragraph?",
+     "a": "Take the ~20–22 raw physics tokens (never NN scores). Give each its maximum-entropy law for its support (Gaussian for continuous, Poisson for counts). Fit on a background-only, NN-free sideband. Score every event by S(x)=Σ −log p_feature. Threshold at the 95th percentile of background S. Push signal through the same reference; it should pile up at high S. The method never touches the NN, so agreement with ABCD is meaningful."},
+    {"cat": "method", "q": "How was each MaxEnt law chosen — random search?",
+     "a": "No. The law is dictated by the feature's support and the constraint you assert: ℝ + mean&variance → Gaussian; counts → Poisson; positive → Exponential/Gamma; bounded → Beta; angle → von Mises. You estimate the asserted moments and plug into the closed form. The Gaussian-vs-Poisson runs were a deliberate ablation (does respecting count support matter? — yes, 43× barrel shift), not a scan."},
+    {"cat": "method", "q": "Does 'region D' mean you touched ABCD?",
+     "a": "No — the method never uses ABCD's machinery. But region D is the NN-low/NN-low corner carved out by NN cuts, so fitting the reference there quietly inherits NN information (the circularity). The fix: fit on a physics-only, NN-free sideband. Say 'NN-free background sideband', not 'region D'."},
+    {"cat": "method", "q": "Why Poisson for the barrel counts and not just 'max-entropy'?",
+     "a": "Poisson is not MaxEnt from a bare mean on the integers (that's geometric). It is MaxEnt within the Bernoulli-sum / ultra-log-concave class (Harremoës 2001; Johnson 2007) — which is precisely detector hit accumulation. Justify it by counting statistics + that class, never as 'mean constraint on integers'."},
+    {"cat": "test", "q": "What is the ultimate test?",
+     "a": "Label every event by both methods — ABCD flag = falls in region A; MaxEnt flag = S>τ — and cross-tabulate, carrying event IDs through. Count classified-the-same vs classified-differently. The off-diagonal cells are the boundary jumpers."},
+    {"cat": "test", "q": "Are the two jumper cells the same kind of event?",
+     "a": "No. MaxEnt-only = anomalous in hit-pattern/physics but sitting where the NN saturated (NN1≈1, NN2≈0). ABCD-only = bulk-normal in every physics feature, cornered into region A by NN score alone (the over-counting). Profile features per cell; the ABCD-only set having no physical signature IS its signature."},
+    {"cat": "test", "q": "Why dCor in addition to MI?",
+     "a": "dCor is a single number in [0,1], zero iff independent, captures nonlinear dependence, and needs no binning — so at the real sample sizes (barrel 787, endcap few thousand) it is a more honest headline than binned MI, whose value drifts with bin count. Keep I as the fine-grained cross-check with its permutation σ."},
+    {"cat": "data", "q": "How do I use my own ng02 CSVs?",
+     "a": "Replace data/sample_signal.csv and data/sample_background.csv with your exports using the same columns (region, scoreNN1b, scoreNN2b, nMDT, nRPC, nTGC, nBOL, clusE, rms_clustime, mindR, isolation, MET_dphi). Nothing else changes. Adjust the count/cont feature lists in core/helix_mi.py DEFAULTS if your schema differs."}
+  ]
+}

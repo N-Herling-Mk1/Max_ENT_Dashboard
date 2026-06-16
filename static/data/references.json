@@ -1,0 +1,30 @@
+{
+  "foundation": [
+    {"claim": "Maximum-entropy principle (least-committal distribution under constraints)",
+     "source": "Jaynes, E. T. (1957). Information Theory and Statistical Mechanics. Phys. Rev. 106:620.",
+     "status": "solid"},
+    {"claim": "MaxEnt is the unique consistent updating rule given moment constraints",
+     "source": "Shore, J. & Johnson, R. (1980). IEEE Trans. Inf. Theory 26(1):26.",
+     "status": "solid"},
+    {"claim": "MaxEnt under moment constraints = exponential family in those moments",
+     "source": "Cover & Thomas (2006), Elements of Information Theory 2e, Thm 12.1.1; Wainwright & Jordan (2008), §3.",
+     "status": "solid"}
+  ],
+  "laws": [
+    {"support": "real line ℝ", "constraint": "mean & variance", "law": "Gaussian",
+     "source": "Cover & Thomas Ch. 12; Shannon (1948).", "status": "solid"},
+    {"support": "positive reals (0,∞)", "constraint": "mean", "law": "Exponential",
+     "source": "Cover & Thomas Ch. 12; Kapur (1989).", "status": "solid"},
+    {"support": "positive reals (0,∞)", "constraint": "E[X] and E[ln X]", "law": "Gamma",
+     "source": "Kapur (1989); Wainwright & Jordan (2008).", "status": "solid"},
+    {"support": "bounded [0,1]", "constraint": "E[ln X], E[ln(1−X)]", "law": "Beta",
+     "source": "Kapur (1989); Wainwright & Jordan (2008).", "status": "solid"},
+    {"support": "circle [0,2π)", "constraint": "first trigonometric moment ⟨cos θ⟩,⟨sin θ⟩", "law": "von Mises",
+     "source": "Mardia & Jupp (2000), Directional Statistics, Wiley.", "status": "solid"},
+    {"support": "non-negative integers ℤ₊", "constraint": "mean only", "law": "Geometric (NOT Poisson)",
+     "source": "Cover & Thomas Ch. 12; Kapur (1989).", "status": "corrective"},
+    {"support": "non-negative integers ℤ₊", "constraint": "mean, within Bernoulli-sum / ultra-log-concave class", "law": "Poisson",
+     "source": "Harremoës (2001), IEEE TIT 47(5):2039; Johnson (2007), Stoch. Proc. Appl. 117(6):791.", "status": "qualifier"}
+  ],
+  "note": "The two ⚠️ rows are the same point: bare mean on the integers gives the geometric, not the Poisson. Poisson is MaxEnt within the Bernoulli-sum class (Harremoës) / ultra-log-concave laws (Johnson) — which is exactly detector hit-accumulation. Justify the barrel's Poisson by counting statistics + this class, never as 'max-entropy from a mean constraint'."
+}

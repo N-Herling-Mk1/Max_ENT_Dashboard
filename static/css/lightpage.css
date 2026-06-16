@@ -1,0 +1,66 @@
+/* ══════════════════════════════════════════════════════════════════
+   shared LIGHT page theme — references + glossary (+ future light pages)
+   white bg · black text · highlights teal + blue · normal + flair
+   overrides helix.css on whatever page links it
+   ════════════════════════════════════════════════════════════════ */
+body{background:#ffffff !important;color:#111418 !important;background-image:none !important;
+  font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body::before{display:none !important}
+
+.lightpage{width:80%;max-width:80%;margin:0 auto;padding:44px 0 90px}
+
+.lp-head{border-bottom:2px solid #2563eb;padding-bottom:18px;margin-bottom:28px}
+.lp-head .kicker{font-family:"Orbitron",sans-serif;font-size:11px;letter-spacing:.28em;
+  color:#0d9488;text-transform:uppercase;margin-bottom:9px}
+.lp-head h1{font-family:"Orbitron",sans-serif;font-weight:700;font-size:30px;color:#0f172a;
+  margin:0;line-height:1.15}
+.lp-head .lead{color:#475569;font-size:14.5px;margin:12px 0 0;max-width:62ch;line-height:1.6}
+
+.lightpage section{margin:30px 0}
+.lightpage h2,.lightpage h3{font-family:"Orbitron",sans-serif;font-weight:500;color:#0f172a;
+  letter-spacing:.04em;border-left:4px solid #14b8a6;padding-left:12px;margin:0 0 14px;text-transform:none}
+.lightpage h2{font-size:15px} .lightpage h3{font-size:13px;border-left-color:#2563eb;color:#1e3a8a}
+
+/* tables (references) */
+.lightpage table{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;
+  border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05);margin-bottom:8px}
+.lightpage th{background:#2563eb;color:#fff;font-family:"Orbitron",sans-serif;font-weight:500;
+  font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;text-align:left;padding:11px 14px;border:0}
+.lightpage td{padding:11px 14px;border-top:1px solid #eef2f7;color:#1f2937;vertical-align:top}
+.lightpage tbody tr:nth-child(even){background:#f8fafc}
+.lightpage tbody tr:hover{background:#ecfdf7}
+.lightpage td.muted,.lightpage .muted{color:#64748b !important}
+.lightpage td.num{color:#0d9488;text-align:right;font-family:"Share Tech Mono",monospace}
+.lightpage td.law,.lightpage .law{font-family:"Share Tech Mono",monospace;color:#0d9488;font-weight:700;white-space:nowrap}
+
+/* badges */
+.lightpage .tag{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;
+  font-family:-apple-system,"Segoe UI",sans-serif}
+.lightpage .tag.ok{background:#ccfbf1;color:#0f766e}            /* teal — solid */
+.lightpage .tag.warn{background:#dbeafe;color:#1d4ed8}          /* blue — qualifier */
+
+/* note callout */
+.lp-note{margin-top:26px;background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;
+  border-radius:10px;padding:16px 18px;color:#1e293b;font-size:13.5px;line-height:1.65}
+.lightpage code{background:#f1f5f9;color:#0d9488;padding:1px 5px;border-radius:4px;font-family:"Share Tech Mono",monospace}
+.lightpage .empty{color:#94a3b8;text-align:center;padding:24px}
+
+/* search box (glossary / qa) */
+.lp-search{width:100%;padding:11px 14px;border:1px solid #cbd5e1;border-radius:10px;
+  font-family:"Share Tech Mono",monospace;font-size:13px;color:#0f172a;background:#fff;margin-bottom:20px}
+.lp-search:focus{outline:none;border-color:#14b8a6;box-shadow:0 0 0 3px rgba(20,184,166,.15)}
+.lp-search::placeholder{color:#94a3b8}
+
+/* category header (grouping) */
+.lp-cat-head{font-family:"Orbitron",sans-serif;font-size:12px;font-weight:500;color:#1e3a8a;
+  letter-spacing:.1em;text-transform:uppercase;border-left:4px solid #2563eb;padding-left:12px;margin:26px 0 12px}
+
+/* term cards (glossary) — same aesthetic as the references entries */
+.lp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.lp-card{background:#fff;border:1px solid #e2e8f0;border-left:4px solid #14b8a6;border-radius:10px;
+  padding:15px 17px;box-shadow:0 1px 3px rgba(15,23,42,.05);transition:.15s}
+.lp-card:hover{border-left-color:#2563eb;box-shadow:0 3px 10px rgba(37,99,235,.10)}
+.lp-card .term{font-family:"Orbitron",sans-serif;font-weight:700;font-size:13.5px;color:#0f172a;
+  display:block;margin-bottom:8px;line-height:1.3}
+.lp-card p{margin:0;color:#1f2937;font-size:13px;line-height:1.6}
+.lp-card code{background:#f1f5f9;color:#0d9488;padding:1px 4px;border-radius:4px}
