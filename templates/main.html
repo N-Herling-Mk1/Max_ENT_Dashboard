@@ -4,73 +4,114 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/helix.css?v=5">
+<link rel="stylesheet" href="/static/css/helix.css?v=11">
+<link rel="stylesheet" href="/static/css/dashlight.css?v=11">
 </head>
 <body>
 <div class="wrap dash">
   <div class="dash-main">
 
+    <div class="stepper">
+      <a class="step active" data-jump="sec-category"><span class="snum">1</span> category test</a>
+      <span class="sarrow">&rarr;</span>
+      <a class="step" data-jump="sec-abcd"><span class="snum">2</span> ABCD vs MaxEnt</a>
+      <span class="sarrow">&rarr;</span>
+      <a class="step" data-jump="sec-agreement"><span class="snum">3</span> agreement</a>
+    </div>
+
+    <div class="panel guide" id="sec-guide">
+      <div class="ph"><span class="dot"></span><h2>start here &mdash; how to read this</h2></div>
+      <ol class="guide-steps">
+        <li><b>Run the category test first.</b> It classifies each region &mdash;
+          <span class="pa">Case A</span> (bulk-driven, ABCD trustworthy) or
+          <span class="pb">Case B</span> (tail-driven, ABCD breaks). The whole readout hinges on which region is which.</li>
+        <li><b>ABCD vs MaxEnt.</b> Two background estimates, side by side per region. In Case A they should agree; in Case B watch MaxEnt and ABCD diverge.</li>
+        <li><b>Agreement matrix.</b> The per-event crosstab. The off-diagonal jumpers &mdash; especially the borderline ones sitting near &tau; &mdash; are the events worth chasing.</li>
+      </ol>
+    </div>
+
     <div class="panel" id="sec-control">
-      <div class="ph"><span class="dot"></span><h2>control</h2></div>
-      <div class="controls">
-        <span><label>region</label>
-          <select id="region"><option value="barrel">barrel</option><option value="endcap">endcap</option></select></span>
-        <span><label>agreement on</label>
-          <select id="agsample"><option value="signal">signal</option><option value="background">background</option></select></span>
-        <button class="btn run" id="run">▶ GENERATE / RUN TEST</button>
-        <button class="btn" id="reload-data">↻ RELOAD DATA</button>
-        <span class="status" id="status">idle — load real CSVs into <code>data/</code> or run the bundled sample.</span>
+      <div class="ph"><span class="dot"></span><h2>control</h2>
+        <span class="status" id="status" style="margin-left:auto">idle &middot; runs barrel + endcap side by side</span></div>
+      <div class="ctrl">
+        <div class="ctrl-config">
+          <div class="field"><label>signal</label>
+            <select id="sigsrc"><option value="mS35">mS35 (only point)</option></select></div>
+          <div class="field"><label>agreement on</label>
+            <select id="agsample"><option value="signal">signal</option><option value="background">background</option></select></div>
+        </div>
+        <div class="ctrl-run">
+          <button class="btn-primary" id="run-cat">&#9312; RUN CATEGORY TEST</button>
+          <button class="btn-primary" id="run" disabled title="run the category test first">&#9313; RUN FULL ANALYSIS</button>
+        </div>
+      </div>
+      <div class="ctrl-outputs">
+        <span class="out-label">jump</span>
+        <button class="chip" data-jump="sec-category">&#10230; category</button>
+        <button class="chip" data-jump="sec-abcd">&#10230; ABCD vs MaxEnt</button>
+        <button class="chip" data-jump="sec-agreement">&#10230; agreement</button>
+        <button class="chip" data-jump="sec-ladder">&#10230; ladder</button>
+        <button class="chip" data-jump="sec-it">&#10230; info theory</button>
+        <button class="chip" data-jump="sec-jumpers">&#10230; jumpers</button>
       </div>
     </div>
 
-    <div class="panel" id="sec-data">
-      <div class="ph"><span class="dot"></span><h2>data view-frame</h2>
-        <span style="margin-left:auto">
-          <select id="dfile"><option value="background">background</option><option value="signal">signal</option></select>
-        </span></div>
-      <div class="grid g2">
-        <div><h3>summary stats</h3><div id="stats"><div class="empty">load data…</div></div></div>
-        <div><h3>preview</h3><div id="preview" style="overflow:auto;max-height:260px"><div class="empty">load data…</div></div></div>
+    <div class="panel" id="sec-category">
+      <div class="ph"><span class="dot"></span><h2>&#9312; category test &mdash; Case A / Case B</h2></div>
+      <div class="muted" style="font-size:11px;margin-bottom:12px">
+        each region by the support&rarr;law diagnostics:
+        <b style="color:var(--cyan)">Case A</b> bulk-driven &middot; ABCD-compatible (Gaussian) &nbsp;vs&nbsp;
+        <b style="color:var(--purple)">Case B</b> tail-driven &middot; ABCD-incompatible (Poisson).
       </div>
+      <div id="category"><div class="empty">run the category test (step 1)</div></div>
     </div>
 
-    <div class="panel" id="sec-ladder">
-      <div class="ph"><span class="dot"></span><h2>dependence ladder &mdash; signal vs background</h2></div>
-      <div class="cards" id="ladder"><div class="empty" style="grid-column:1/-1">run the test to populate</div></div>
-      <div class="muted" style="font-size:11px;margin-top:8px">
-        <span style="color:var(--sig)">■</span> signal &nbsp; <span style="color:var(--bg-c)">■</span> background &nbsp;·&nbsp;
-        linear r ⊂ dCor ⊂ closure (2-bin MI) ⊂ I (full MI, σ vs permutation null)
-      </div>
-    </div>
-
-    <div class="panel" id="sec-planes">
-      <div class="ph"><span class="dot"></span><h2>the planes &mdash; where I lives</h2></div>
-      <div class="grid g3" id="plots"><div class="empty" style="grid-column:1/-1">run the test to populate</div></div>
+    <div class="panel" id="sec-abcd">
+      <div class="ph"><span class="dot"></span><h2>&#9313; ABCD vs MaxEnt &mdash; per region</h2></div>
+      <div id="abcd"><div class="empty">run full analysis (step 2)</div></div>
     </div>
 
     <div class="panel" id="sec-agreement">
-      <div class="ph"><span class="dot"></span><h2>method agreement &mdash; ABCD &times; MaxEnt</h2>
-        <span class="status" id="ag-meta" style="margin-left:auto"></span></div>
-      <div id="matrix"><div class="empty">run the test to populate</div></div>
+      <div class="ph"><span class="dot"></span><h2>&#9314; method agreement &mdash; ABCD &times; MaxEnt</h2></div>
+      <div id="matrix"><div class="empty">run full analysis</div></div>
+    </div>
+
+    <div class="panel" id="sec-ladder">
+      <div class="ph"><span class="dot"></span><h2>dependence ladder</h2></div>
+      <div id="ladder"><div class="empty">run full analysis</div></div>
+      <div class="muted" style="font-size:11px;margin-top:8px">
+        linear r &sub; dCor &sub; closure (2-bin MI) &sub; I (full MI, &sigma; vs permutation null)
+      </div>
+    </div>
+
+    <div class="panel" id="sec-it">
+      <div class="ph"><span class="dot"></span><h2>information theory &mdash; entropy</h2></div>
+      <div id="entropy"><div class="empty">run full analysis</div></div>
+      <div class="muted" style="font-size:11px;margin-top:8px">
+        I = H(X) + H(Y) &minus; H(X,Y), per class, per region.
+      </div>
     </div>
 
     <div class="panel" id="sec-jumpers">
       <div class="ph"><span class="dot"></span><h2>boundary jumpers &mdash; what crosses</h2></div>
-      <div class="grid g2" id="jumpers"><div class="empty" style="grid-column:1/-1">run the test to populate</div></div>
+      <div id="jumpers"><div class="empty">run full analysis</div></div>
     </div>
+
 
   </div>
 
   <aside class="toc">
     <div class="toc-h">ON THIS PAGE</div>
-    <a data-target="sec-control" class="active">control</a>
-    <a data-target="sec-data">data view-frame</a>
+    <a data-target="sec-guide" class="active">start here</a>
+    <a data-target="sec-control">control</a>
+    <a data-target="sec-category">&#9312; category test</a>
+    <a data-target="sec-abcd">&#9313; ABCD vs MaxEnt</a>
+    <a data-target="sec-agreement">&#9314; agreement</a>
     <a data-target="sec-ladder">dependence ladder</a>
-    <a data-target="sec-planes">the planes</a>
-    <a data-target="sec-agreement">method agreement</a>
+    <a data-target="sec-it">information theory</a>
     <a data-target="sec-jumpers">boundary jumpers</a>
   </aside>
 </div>
-<script src="/static/js/main.js?v=5"></script>
+<script src="/static/js/main.js?v=11"></script>
 </body>
 </html>

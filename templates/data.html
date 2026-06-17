@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>data view</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/helix.css?v=11">
+<link rel="stylesheet" href="/static/css/dashlight.css?v=11">
+</head>
+<body>
+<div class="wrap dash">
+  <div class="dash-main" style="width:100%;max-width:100%">
+
+    <div class="panel" id="sec-files">
+      <div class="ph"><span class="dot"></span><h2>data view &mdash; files</h2>
+        <span style="margin-left:auto"><button class="btn-ghost" id="files-refresh">&#8635; rescan data/</button></span></div>
+      <div class="muted" style="font-size:11px;margin-bottom:12px">every CSV in <code>data/</code> &mdash; rows, columns, region split, size.</div>
+      <div id="files-overview"><div class="empty">scanning data/ &hellip;</div></div>
+    </div>
+
+    <div class="panel" id="sec-inspect">
+      <div class="ph"><span class="dot"></span><h2>inspect</h2>
+        <span style="margin-left:auto;display:flex;gap:8px">
+          <select id="dfile"><option value="background">background</option><option value="signal">signal</option></select>
+          <select id="dregion"><option value="barrel">barrel</option><option value="endcap">endcap</option></select>
+        </span></div>
+      <div class="grid g2">
+        <div><h3>summary stats</h3><div id="stats" class="tbl-wrap"><div class="empty">load data&hellip;</div></div></div>
+        <div><h3>preview</h3><div id="preview" class="tbl-wrap"><div class="empty">load data&hellip;</div></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script src="/static/js/data.js?v=11"></script>
+</body>
+</html>

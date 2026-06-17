@@ -52,6 +52,10 @@ def shell():
 def page_main():
     return render_template("main.html")
 
+@app.route("/data")
+def page_data():
+    return render_template("data.html")
+
 @app.route("/references")
 def page_references():
     return render_template("references.html")
@@ -70,6 +74,37 @@ def favicon():
 
 
 # ── data view-frame: CSV preview + summary stats ────────────────────
+@app.route("/api/files")
+def api_files():
+    """Synopsis of every CSV in data/: rows, columns, region breakdown, size."""
+    import glob, csv as _csv
+    paths, seen = [], set()
+    for p in list(DATA.values()) + sorted(glob.glob(os.path.join("data", "*.csv"))):
+        ap = os.path.abspath(p)
+        if os.path.exists(p) and ap not in seen:
+            seen.add(ap); paths.append(p)
+    files = []
+    for p in paths:
+        try:
+            with open(p, newline="") as f:
+                rd = _csv.reader(f)
+                header = next(rd, [])
+                ridx = header.index("region") if "region" in header else -1
+                rows = 0; regions = {}
+                for row in rd:
+                    rows += 1
+                    if 0 <= ridx < len(row):
+                        regions[row[ridx]] = regions.get(row[ridx], 0) + 1
+            role = next((k for k, v in DATA.items()
+                         if os.path.abspath(v) == os.path.abspath(p)), "")
+            files.append(dict(name=os.path.basename(p), role=role, rows=rows,
+                              n_cols=len(header), columns=header, regions=regions,
+                              size_kb=round(os.path.getsize(p) / 1024, 1)))
+        except Exception as e:
+            files.append(dict(name=os.path.basename(p), error=str(e)))
+    return jsonify(files=files)
+
+
 @app.route("/api/data")
 def api_data():
     which = request.args.get("file", "background")
@@ -97,6 +132,31 @@ def api_data():
 
 
 # ── run the analysis engine ─────────────────────────────────────────
+@app.route("/api/categorize", methods=["POST"])
+def api_categorize():
+    try:
+        res = helix_mi.categorize(DATA["signal"], DATA["background"],
+                                  outdir=os.path.join("static", "out"))
+        return jsonify(res)
+    except Exception as e:
+        return jsonify(error=str(e)), 200
+
+
+@app.route("/api/run_both", methods=["POST"])
+def api_run_both():
+    body = request.get_json(silent=True) or {}
+    ag = body.get("agreement_sample", "signal")
+    out = {}
+    try:
+        for region in ("barrel", "endcap"):
+            out[region] = helix_mi.analyze(DATA["signal"], DATA["background"],
+                                           region=region, outdir=os.path.join("static", "out"),
+                                           agreement_sample=ag)
+        return jsonify(out)
+    except Exception as e:
+        return jsonify(error=str(e)), 200
+
+
 @app.route("/api/run", methods=["POST"])
 def api_run():
     body = request.get_json(silent=True) or {}

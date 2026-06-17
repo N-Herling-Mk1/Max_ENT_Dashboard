@@ -1,0 +1,89 @@
+/* ════════════════════════════════════════════════════════════════════
+   dashlight — off-white interiors for the DASHBOARD panels only.
+   Redefines the theme vars on `.dash .panel` so panels, inner cards,
+   tables and text flip together. Page background, top-header chrome,
+   sidebar nav and the TOC stay dark (they are not `.panel` descendants).
+   ════════════════════════════════════════════════════════════════ */
+.dash .panel{
+  /* palette flip — scoped to panels + their descendants */
+  --panel:#f4f5f7; --panel2:#ffffff; --bg2:#f1f5f9;
+  --txt:#1f2937; --fg:#0f172a; --muted:#5b6577; --faint:#94a3b8;
+  --line:#e7eaf0; --line2:#d9dde6;
+  --cyan:#0d9488; --purple:#7c3aed; --sig:#0f9d6b; --bg-c:#ea580c; --amber:#b45309;
+  background:#f4f5f7; border:1px solid #d9dde6; color:#1f2937;
+  box-shadow:0 1px 3px rgba(2,6,20,.20);
+}
+
+/* section title navy (keep the purple dot); h3 teal */
+.dash .panel .ph h2{color:#0f172a}
+.dash .panel h3{color:#0d9488}
+
+/* hard-coded white text → dark */
+.dash .panel .file-row .fname,
+.dash .panel .cathead .reg,
+.dash .panel .border-note b{color:#0f172a}
+
+/* primary button → solid blue (faint-purple fill is invisible on light) */
+.dash .panel .btn-primary{background:#2563eb;border-color:#2563eb;color:#fff}
+.dash .panel .btn-primary:hover{background:#1d4ed8;box-shadow:0 0 14px rgba(37,99,235,.35)}
+
+/* launcher chips */
+.dash .panel .chip{background:#ecfdf7;border-color:#99f6e4;color:#0d9488}
+.dash .panel .chip:hover{border-color:#0d9488;box-shadow:0 0 8px rgba(13,148,136,.22)}
+.dash .panel .chip.done{background:#2563eb;border-color:#2563eb;color:#fff}
+
+/* selects + ghost buttons */
+.dash .panel select,.dash .panel .btn{background:#fff;color:#0f172a;border:1px solid #cbd5e1}
+.dash .panel .btn-ghost{background:#fff;color:#475569;border-color:#cbd5e1}
+.dash .panel .btn-ghost:hover{color:#0d9488;border-color:#0d9488}
+
+/* borderline note → light amber */
+.dash .panel .border-note{background:#fff7ed;border-color:#fed7aa;color:#b45309}
+
+/* tables → references look (blue header, zebra, light borders) */
+.dash .panel table{border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;
+  border-collapse:separate;border-spacing:0}
+.dash .panel th{background:#2563eb;color:#fff;border:0}
+.dash .panel td{border-bottom:0;border-top:1px solid #eef2f7;color:#1f2937}
+.dash .panel td.num{color:#0d9488}
+.dash .panel tbody tr:nth-child(even){background:#f8fafc}
+.dash .panel tbody tr:hover{background:#ecfdf7}
+
+/* plot frame + matrix readability on light */
+.dash .panel .plot{background:#fff;border:1px solid #e2e8f0}
+.dash .panel .cmcell .n{color:#0f172a}
+.dash .panel .cm .hd{color:#5b6577}
+
+/* ── stepper (top, light) ── */
+.dash .stepper{display:flex;align-items:center;gap:8px;background:#ffffff;border:1px solid #d9dde6;
+  border-radius:12px;padding:9px 14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(2,6,20,.20)}
+.dash .step{display:flex;align-items:center;gap:8px;font-family:var(--disp);font-size:12px;
+  color:#475569;text-decoration:none;padding:6px 12px;border-radius:8px;cursor:pointer;transition:.15s}
+.dash .step .snum{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;
+  border-radius:50%;background:#e2e8f0;color:#475569;font-size:11px;font-weight:700}
+.dash .step:hover{background:#f1f5f9}
+.dash .step.active{background:#eff6ff;color:#1d4ed8}
+.dash .step.active .snum{background:#2563eb;color:#fff}
+.dash .sarrow{color:#94a3b8}
+
+/* ── guide card (always on) ── */
+.dash .panel.guide{border-left:4px solid #2563eb}
+.dash .guide-steps{margin:4px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:9px}
+.dash .guide-steps li{font-size:13px;color:#334155;line-height:1.55}
+.dash .guide-steps li b{color:#0f172a}
+.dash .pa{color:#0f766e;font-weight:700}
+.dash .pb{color:#7c3aed;font-weight:700}
+
+/* ── two-region columns ── */
+.dash .rcols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.dash .rcols{grid-template-columns:1fr}}
+.dash .rcol{min-width:0}
+.dash .rtag{font-family:var(--disp);font-size:11px;font-weight:700;letter-spacing:.1em;
+  padding:4px 10px;border-radius:6px;display:inline-block;margin-bottom:10px}
+.dash .rcol .rtag.barrel{background:#dcfce7;color:#15803d}
+.dash .rcol .rtag.endcap{background:#dbeafe;color:#1d4ed8}
+
+/* ── table overflow fix (data view + ladder) ── */
+.dash .tbl-wrap{overflow:auto;max-height:340px;border:1px solid #e2e8f0;border-radius:8px}
+.dash .grid.g2>*{min-width:0}
+.dash .rsub{font-size:10px;color:#94a3b8;font-weight:400}

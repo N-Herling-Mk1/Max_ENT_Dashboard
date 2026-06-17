@@ -239,6 +239,160 @@ def make_plots(sig, bg, xcol, ycol, cut_x, cut_y, outdir, tag):
     return paths
 
 
+# ──────────────── information theory + region classification ────────────────
+def _entropy(p):
+    p = p[p > 0]
+    return float(-(p * np.log(p)).sum())
+
+
+def entropy_metrics(x, y, bins):
+    """Marginal H(X), H(Y), joint H(X,Y), and I = HX+HY−HXY (nats)."""
+    pij, _, _ = np.histogram2d(x, y, bins=bins)
+    pij = pij / max(pij.sum(), 1e-12)
+    px, py = pij.sum(1), pij.sum(0)
+    HX, HY, HXY = _entropy(px), _entropy(py), _entropy(pij.ravel())
+    I = max(HX + HY - HXY, 0.0)
+    return dict(HX=HX, HY=HY, HXY=HXY, I=I,
+                I_norm=float(I / max(min(HX, HY), 1e-12)))
+
+
+def build_joint(d, xcol, ycol, bins):
+    pij, ex, ey = np.histogram2d(d[xcol], d[ycol], bins=bins)
+    pij = pij / max(pij.sum(), 1e-12)
+    return dict(pij=pij, px=pij.sum(1), py=pij.sum(0), ex=ex, ey=ey)
+
+
+def detector_eval(d, joint, xcol, ycol):
+    """Per-event marginal detector (−log pX −log pY, blind to dependence)
+    and joint detector (pmi = log pXY/(pX pY), sees dependence)."""
+    ex, ey, px, py, pij = joint["ex"], joint["ey"], joint["px"], joint["py"], joint["pij"]
+    ix = np.clip(np.digitize(d[xcol], ex) - 1, 0, len(ex) - 2)
+    iy = np.clip(np.digitize(d[ycol], ey) - 1, 0, len(ey) - 2)
+    eps = 1e-12
+    marg = -np.log(px[ix] + eps) - np.log(py[iy] + eps)
+    pmi = np.log((pij[ix, iy] + eps) / (px[ix] * py[iy] + eps))
+    return marg, pmi
+
+
+def tail_index(S):
+    """Right-tail heaviness: (P99−P50)/(P50−P1). ≈1 symmetric, ≫1 tail-driven."""
+    p1, p50, p99 = np.percentile(S, [1, 50, 99])
+    return float((p99 - p50) / (p50 - p1 + 1e-9))
+
+
+def classify_region(closure, dcor, mi, S_bg, maxent):
+    """Case A (bulk-driven, ABCD-compatible) vs Case B (tail-driven,
+    ABCD-incompatible) — from the diagnostics the references certify."""
+    dev = abs(closure["ratio"] - 1.0) if np.isfinite(closure["ratio"]) else 0.0
+    sigma = mi["sigma"]
+    ti = tail_index(S_bg)
+    npois = len(maxent["features"]["poisson"]); ngaus = len(maxent["features"]["gaussian"])
+    pois_share = npois / max(npois + ngaus, 1)
+    signals = [
+        dict(name="ABCD closure dev |obs/pred−1|", value=round(dev, 3), thresh=0.30,
+             leans="B" if dev > 0.30 else "A"),
+        dict(name="distance correlation dCor", value=round(float(dcor), 3), thresh=0.15,
+             leans="B" if dcor > 0.15 else "A"),
+        dict(name="MI significance σ", value=round(sigma, 1), thresh=5.0,
+             leans="B" if sigma > 5.0 else "A"),
+        dict(name="surprise tail index", value=round(ti, 2), thresh=1.60,
+             leans="B" if ti > 1.60 else "A"),
+        dict(name="Poisson(count) feature share", value=round(pois_share, 2), thresh=0.40,
+             leans="B" if pois_share > 0.40 else "A"),
+    ]
+    b = sum(1 for s in signals if s["leans"] == "B")
+    case = "B" if (dev > 0.50 or b >= 3) else "A"          # closure is decisive when large
+    return dict(case=case, b_signals=b, n_signals=len(signals), signals=signals,
+                label=("tail-driven · ABCD-incompatible" if case == "B"
+                       else "bulk-driven · ABCD-compatible"),
+                dominant_law=("Poisson (counts, tail)" if case == "B"
+                              else "Gaussian (continuous, bulk)"))
+
+
+def abcd_plot(d, xcol, ycol, cut_x, cut_y, closure, outdir, tag, which):
+    fig, ax = plt.subplots(figsize=(5.0, 4.4)); fig.patch.set_facecolor("white")
+    ax.set_facecolor("white")
+    lim_x = np.quantile(d[xcol], [0.001, 0.999]); lim_y = np.quantile(d[ycol], [0.001, 0.999])
+    ax.hist2d(d[xcol], d[ycol], bins=100, cmap=VIRIDIS,
+              range=[lim_x, lim_y] if lim_x[0] < lim_x[1] else None)
+    ax.axvline(cut_x, color="w", lw=1.2, ls="--"); ax.axhline(cut_y, color="w", lw=1.2, ls="--")
+    for fx, fy, name, n in [(.97, .97, "A", closure["NA"]), (.97, .03, "B", closure["NB"]),
+                            (.03, .97, "C", closure["NC"]), (.03, .03, "D", closure["ND"])]:
+        ax.text(fx, fy, f"{name}\n{n}", transform=ax.transAxes, color="w", fontsize=10,
+                fontweight="bold", ha="center", va="center",
+                bbox=dict(boxstyle="round", fc="black", alpha=.45, ec="none"))
+    rr = closure["ratio"]
+    ax.set_title(f"ABCD plane — {which}  (obs/pred={rr:.2f}, A=B·C/D)"
+                 if np.isfinite(rr) else f"ABCD plane — {which}",
+                 fontsize=10.5, fontweight="bold")
+    ax.set_xlabel("NN1"); ax.set_ylabel("NN2")
+    p = os.path.join(outdir, f"{tag}_abcd_{which}.png"); fig.tight_layout()
+    fig.savefig(p, dpi=120, facecolor="white"); plt.close(fig); return p
+
+
+def detector_hist_plot(marg_sig, marg_bg, pmi_sig, pmi_bg, outdir, tag):
+    fig, ax = plt.subplots(1, 2, figsize=(9.2, 3.9)); fig.patch.set_facecolor("white")
+    for a in ax: a.set_facecolor("white")
+    b1 = np.histogram_bin_edges(np.concatenate([marg_bg, marg_sig]), bins=40)
+    ax[0].hist(marg_bg, bins=b1, density=True, alpha=.55, color="#3b528b", label="background")
+    ax[0].hist(marg_sig, bins=b1, density=True, alpha=.55, color="#5ec962", label="signal")
+    ax[0].set_title("marginal detector  −log p₀  (blind)", fontsize=10.5, fontweight="bold")
+    ax[0].set_xlabel("marginal surprise"); ax[0].legend(fontsize=8)
+    b2 = np.histogram_bin_edges(np.concatenate([pmi_bg, pmi_sig]), bins=40)
+    ax[1].hist(pmi_bg, bins=b2, density=True, alpha=.55, color="#3b528b", label="background")
+    ax[1].hist(pmi_sig, bins=b2, density=True, alpha=.55, color="#5ec962", label="signal")
+    ax[1].set_title("joint detector  pmi  (separates)", fontsize=10.5, fontweight="bold")
+    ax[1].set_xlabel("pointwise MI (nats)"); ax[1].legend(fontsize=8)
+    p = os.path.join(outdir, f"{tag}_detectors.png"); fig.tight_layout()
+    fig.savefig(p, dpi=120, facecolor="white"); plt.close(fig); return p
+
+
+def compare_plot(verdicts, outdir):
+    regions = list(verdicts.keys())
+    metrics = ["closure dev", "dCor", "MI σ (÷10)", "tail idx"]
+    def vals(v):
+        s = {x["name"]: x["value"] for x in v["classify"]["signals"]}
+        return [s["ABCD closure dev |obs/pred−1|"], s["distance correlation dCor"],
+                s["MI significance σ"] / 10.0, s["surprise tail index"]]
+    fig, ax = plt.subplots(figsize=(7.6, 3.9)); fig.patch.set_facecolor("white"); ax.set_facecolor("white")
+    xpos = np.arange(len(metrics)); w = 0.36; colors = {"barrel": "#5ec962", "endcap": "#3b528b"}
+    for i, reg in enumerate(regions):
+        ax.bar(xpos + (i - 0.5) * w, vals(verdicts[reg]), width=w,
+               color=colors.get(reg, "#999"),
+               label=f"{reg} → Case {verdicts[reg]['classify']['case']}")
+    ax.set_xticks(xpos); ax.set_xticklabels(metrics, fontsize=9); ax.axhline(0, color="#ccc", lw=.8)
+    ax.set_title("ABCD diagnostics vs category verdict — barrel vs endcap",
+                 fontsize=10.5, fontweight="bold"); ax.legend(fontsize=9)
+    p = os.path.join(outdir, "compare_regions.png"); fig.tight_layout()
+    fig.savefig(p, dpi=120, facecolor="white"); plt.close(fig); return p
+
+
+def categorize(signal_csv, background_csv, outdir="static/out", **kw):
+    """Run both regions on the background, classify each Case A/B, compare."""
+    cfg = {**DEFAULTS, **kw}; os.makedirs(outdir, exist_ok=True)
+    xcol, ycol = cfg["xcol"], cfg["ycol"]; verdicts = {}
+    for region in ("barrel", "endcap"):
+        cut_x, cut_y = cfg["cuts"].get(region, (0.5, 0.5))
+        try:
+            bg, n_bg = load_csv(background_csv, region)
+        except Exception:
+            continue
+        if n_bg == 0:
+            continue
+        dcor = distance_correlation(bg[xcol], bg[ycol])
+        mi = mi_permutation_null(bg[xcol], bg[ycol], cfg["n_bins"], cfg["n_perm"])
+        clo = abcd_closure(bg[xcol], bg[ycol], cut_x, cut_y)
+        model = fit_maxent(bg, cfg["count_features"], cfg["cont_features"])
+        S_bg, _ = surprise(bg, model)
+        maxent = {"features": {"poisson": list(model["count"]), "gaussian": list(model["cont"])}}
+        cls = classify_region(clo, dcor, mi, S_bg, maxent)
+        verdicts[region] = dict(region=region, n=n_bg, closure=clo,
+                                dcor=round(float(dcor), 3), mi=mi, classify=cls)
+    plot = compare_plot(verdicts, outdir) if len(verdicts) == 2 else None
+    return dict(verdicts=verdicts, generated=time.strftime("%Y-%m-%d %H:%M:%S"),
+                plot=(os.path.relpath(plot, "static").replace(os.sep, "/") if plot else None))
+
+
 # ─────────────────────────── driver ────────────────────────────────
 DEFAULTS = dict(
     xcol="scoreNN1b", ycol="scoreNN2b",
@@ -273,6 +427,10 @@ def analyze(signal_csv, background_csv, region="barrel", outdir="static/out",
     res = {"region": region, "cuts": {"NN1": cut_x, "NN2": cut_y},
            "ladder": {"signal": ladder(sig), "background": ladder(bg)}}
 
+    # information theory: entropy decomposition (per class)
+    res["entropy"] = {"signal": entropy_metrics(sig[xcol], sig[ycol], cfg["n_bins"]),
+                      "background": entropy_metrics(bg[xcol], bg[ycol], cfg["n_bins"])}
+
     # MaxEnt: fit reference on background, score both
     model = fit_maxent(bg, cfg["count_features"], cfg["cont_features"])
     S_bg, _ = surprise(bg, model)
@@ -282,15 +440,39 @@ def analyze(signal_csv, background_csv, region="barrel", outdir="static/out",
                      "S_bg_mean": float(S_bg.mean()), "S_sig_mean": float(S_sig.mean()),
                      "features": {"poisson": list(model["count"]), "gaussian": list(model["cont"])}}
 
+    # detectors: marginal (blind) vs joint (separating), built on background joint
+    joint = build_joint(bg, xcol, ycol, 40)
+    marg_sig, pmi_sig = detector_eval(sig, joint, xcol, ycol)
+    marg_bg, pmi_bg = detector_eval(bg, joint, xcol, ycol)
+
+    # region category verdict (Case A / B) from the background diagnostics
+    bgl = res["ladder"]["background"]
+    res["classify"] = classify_region(bgl["closure"], bgl["dcor"], bgl["mi"], S_bg,
+                                       {"features": res["maxent"]["features"]})
+
     # agreement + jumpers on the chosen sample
     tgt, S_tgt = (sig, S_sig) if agreement_sample == "signal" else (bg, S_bg)
     agr = agreement(tgt[xcol], tgt[ycol], S_tgt, cut_x, cut_y, tau)
     prof = jumper_profile(tgt, agr["masks"], feats)
-    res["agreement"] = {"sample": agreement_sample,
+
+    def borderline(mask):                       # how close are jumpers to τ?
+        if mask.sum() == 0:
+            return dict(n=0)
+        rel = np.abs(S_tgt[mask] - tau) / (abs(tau) + 1e-9)
+        return dict(n=int(mask.sum()), median_rel=float(np.median(rel)),
+                    frac_within_10pct=float(np.mean(rel < 0.10)),
+                    frac_within_25pct=float(np.mean(rel < 0.25)))
+
+    res["agreement"] = {"sample": agreement_sample, "tau": tau,
                         "cells": agr["cells"], "same": agr["same"],
-                        "different": agr["different"], "jumpers": prof}
+                        "different": agr["different"], "jumpers": prof,
+                        "borderline": {"abcd_only": borderline(agr["masks"]["abcd_only"]),
+                                       "maxent_only": borderline(agr["masks"]["maxent_only"])}}
 
     paths = make_plots(sig, bg, xcol, ycol, cut_x, cut_y, outdir, region)
+    paths["abcd_background"] = abcd_plot(bg, xcol, ycol, cut_x, cut_y, bgl["closure"], outdir, region, "background")
+    paths["abcd_signal"] = abcd_plot(sig, xcol, ycol, cut_x, cut_y, res["ladder"]["signal"]["closure"], outdir, region, "signal")
+    paths["detectors"] = detector_hist_plot(marg_sig, marg_bg, pmi_sig, pmi_bg, outdir, region)
     res["plots"] = {k: os.path.relpath(v, "static").replace(os.sep, "/")
                     for k, v in paths.items()}
     res["meta"] = {"n_signal": n_sig, "n_background": n_bg,
