@@ -14,6 +14,9 @@
 .hx-modal-b{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
 .hx-modal-x{font-family:var(--disp);font-size:12px;letter-spacing:.1em;color:var(--cyan);background:#000;border:1px solid var(--cyan);border-radius:6px;padding:9px 18px;cursor:pointer}
 .hx-modal-x:hover{box-shadow:0 0 12px rgba(40,224,208,.4)}
+#nav-topo .lockglyph{font-size:10px;opacity:.7;margin-left:4px}
+#nav-topo.locked .lockglyph{color:#e0a85a}
+#nav-topo.unlocked .lockglyph{color:#5dca7a}
 </style>
 </head>
 <body>
@@ -52,6 +55,7 @@
         <button data-src="/glossary">GLOSSARY</button>
         <button data-src="/pyfiles">PYTHON</button>
         <button data-src="/qa">Q&amp;A</button>
+        <button data-src="/topology" id="nav-topo" class="locked">TOPOLOGY <span class="lockglyph">&#128274;</span></button>
       </nav>
     </aside>
     <iframe id="view" class="frame" src="/main" title="view"></iframe>
@@ -81,6 +85,13 @@
   document.getElementById('btn-reload').onclick = ()=> helixModal('REFRESH — DISABLED', 'View refresh is disconnected in this build.');
   document.getElementById('btn-help').onclick = ()=>{ setActive('/qa'); view.src='/qa'; };
   document.getElementById('btn-settings').onclick = ()=> helixModal('SETTINGS — DISABLED', 'Settings are disconnected in this build.');
+  // topology page reports when its diagnostic has been run -> clear the nav lock
+  window.addEventListener('message', e=>{
+    if (e.data && e.data.hx === 'topo-unlocked') {
+      const t = document.getElementById('nav-topo');
+      if (t) { t.classList.remove('locked'); t.classList.add('unlocked'); }
+    }
+  });
 </script>
 </body>
 </html>

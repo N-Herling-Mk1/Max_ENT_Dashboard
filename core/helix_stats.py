@@ -304,5 +304,187 @@ def sweep_overlap(background_csv, grid_n=25, bins=16, cfg=None):
             kappa=[[round(float(v), 3) for v in row] for row in kappa],
             A=[[int(v) for v in row] for row in A],
             both=[[int(v) for v in row] for row in both],
+            nx=[int(v) for v in Gx.sum(0)],   # N(x>grid[i]) per cut_x
+            ny=[int(v) for v in Gy.sum(0)],   # N(y>grid[j]) per cut_y
         )
     return out
+
+
+def _xlog2(p):
+    import numpy as np
+    p = np.asarray(p, float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(p > 0, -p * np.log2(p), 0.0)
+
+
+def sweep_label(background_csv, signal_csv, grid_n=25, cfg=None, prior="equal"):
+    """Label-aware sweep over the (cut_x, cut_y) grid.
+
+    For binarized X = 1[x>cut_x], Y = 1[y>cut_y] and class label L (signal vs
+    background), computes per cut:
+      ixl[i]      = I(X;L)        — how well the NN1 cut alone separates signal
+      iyl[j]      = I(Y;L)        — how well the NN2 cut alone separates signal
+      sep[i][j]   = I(X,Y;L)      — separation of the joint A/B/C/D partition
+      coinfo[i][j]= I(X;L)+I(Y;L)-I(X,Y;L)   — co-information:
+                    > 0 the two cuts are REDUNDANT (second axis duplicates the first
+                        against signal — the 'duplication worth avoiding')
+                    < 0 the two cuts are SYNERGISTIC (complementary — the ideal)
+    All in bits. Each MI with the label is a (weighted) Jensen-Shannon divergence
+    between the signal and background cell distributions:
+      I(Z;L) = H(w_s p_s + w_b p_b) - w_s H(p_s) - w_b H(p_b).
+
+    prior: 'equal' -> w_s = w_b = 0.5 (default; removes the arbitrary signal-MC
+                      sample size, measuring intrinsic separability/redundancy)
+           'mc'    -> weight by the raw signal/background event counts.
+    """
+    import numpy as np
+    base = {**H.DEFAULTS, **(cfg or {})}
+    grid = np.linspace(0.05, 0.95, grid_n)
+    out = {}
+    for region in ("barrel", "endcap"):
+        xcol, ycol = H.resolve_axes(base, region)
+        bg, _ = H.load_csv(background_csv, region)
+        sg, _ = H.load_csv(signal_csv, region)
+
+        def xy(df):
+            m = np.isfinite(df[xcol]) & np.isfinite(df[ycol])
+            return np.clip(df[xcol][m], 0, 1), np.clip(df[ycol][m], 0, 1)
+        xb, yb = xy(bg); xs, ys = xy(sg)
+        Nb, Ns = len(xb), len(xs)
+        if Nb == 0 or Ns == 0:
+            continue
+        ws, wb = (0.5, 0.5) if prior == "equal" else (Ns / (Ns + Nb), Nb / (Ns + Nb))
+
+        def cells(x, y):
+            Gx = (x[:, None] > grid[None, :]).astype(float)
+            Gy = (y[:, None] > grid[None, :]).astype(float)
+            A = Gx.T @ Gy                       # K×K  N(x>cx & y>cy)
+            nx = Gx.sum(0); ny = Gy.sum(0)      # K
+            return A, nx, ny
+        Ab, nxb, nyb = cells(xb, yb)
+        As, nxs, nys = cells(xs, ys)
+
+        # 4-cell class-conditional probabilities, K×K
+        def quad(A, nx, ny, Ntot):
+            a = A / Ntot
+            c = (nx[:, None] - A) / Ntot
+            b = (ny[None, :] - A) / Ntot
+            d = 1.0 - a - b - c
+            return a, b, c, d
+        sa, sb, sc, sd = quad(As, nxs, nys, Ns)
+        ba, bb, bc, bd = quad(Ab, nxb, nyb, Nb)
+        Hs = _xlog2(sa) + _xlog2(sb) + _xlog2(sc) + _xlog2(sd)
+        Hb = _xlog2(ba) + _xlog2(bb) + _xlog2(bc) + _xlog2(bd)
+        Hm = (_xlog2(ws * sa + wb * ba) + _xlog2(ws * sb + wb * bb)
+              + _xlog2(ws * sc + wb * bc) + _xlog2(ws * sd + wb * bd))
+        sep = np.clip(Hm - ws * Hs - wb * Hb, 0, None)   # I(X,Y;L)
+
+        # per-axis I(X;L), I(Y;L) via Bernoulli JSD
+        def axis_mi(ns, Ns_, nb, Nb_):
+            ps = ns / Ns_; pb = nb / Nb_
+            Hsb = _xlog2(ps) + _xlog2(1 - ps)
+            Hbb = _xlog2(pb) + _xlog2(1 - pb)
+            mm = ws * ps + wb * pb
+            Hmb = _xlog2(mm) + _xlog2(1 - mm)
+            return np.clip(Hmb - ws * Hsb - wb * Hbb, 0, None)
+        ixl = axis_mi(nxs, Ns, nxb, Nb)   # K, function of cut_x
+        iyl = axis_mi(nys, Ns, nyb, Nb)   # K, function of cut_y
+
+        coinfo = ixl[:, None] + iyl[None, :] - sep   # K×K, signed
+
+        out[region] = dict(
+            grid=[round(float(g), 3) for g in grid], n_bg=Nb, n_sig=Ns, prior=prior,
+            sep=[[round(float(v), 5) for v in row] for row in sep],
+            coinfo=[[round(float(v), 5) for v in row] for row in coinfo],
+            ixl=[round(float(v), 5) for v in ixl],
+            iyl=[round(float(v), 5) for v in iyl],
+        )
+    return out
+
+
+def _bent(p):
+    import numpy as np
+    return 0.0 if (p <= 0 or p >= 1) else float(-p * np.log2(p) - (1 - p) * np.log2(1 - p))
+
+
+def _pca2(M, whiten=False):
+    import numpy as np
+    Mc = M - M.mean(0)
+    _, S, Vt = np.linalg.svd(Mc, full_matrices=False)
+    coords = Mc @ Vt[:2].T
+    if whiten:
+        sdc = coords.std(0); sdc[sdc < 1e-9] = 1.0
+        coords = coords / sdc
+    ev = (S ** 2) / (S ** 2).sum()
+    return coords, ev, Vt
+
+
+def topology_cloud(background_csv, signal_csv, grid_n=25, cfg=None):
+    """ONE point per cut (cut_x, cut_y); both regions' metrics are concatenated
+    into a single feature vector, so each point is a realizable shared selection
+    scored jointly across barrel and endcap. Returns the cloud plus several PCA
+    embeddings (standard / whitened / robust) to compare."""
+    import numpy as np
+    sw = sweep_overlap(background_csv, grid_n=grid_n, cfg=cfg)
+    lb = sweep_label(background_csv, signal_csv, grid_n=grid_n, cfg=cfg)
+    regions = [r for r in ("barrel", "endcap") if r in sw and r in lb]
+    if len(regions) < 2:
+        return dict(points=[], feat_names=[], embeddings={})
+    grid = sw[regions[0]]["grid"]; K = len(grid)
+
+    # per-region U(i,j) map
+    Umap = {}
+    for region in regions:
+        D = sw[region]; N = D["N"]
+        A = np.array(D["A"], float); nx = np.array(D["nx"], float); ny = np.array(D["ny"], float)
+        Um = np.zeros((K, K))
+        for i in range(K):
+            for j in range(K):
+                a = A[i][j]; c = nx[i] - a; b = ny[j] - a; d = N - a - b - c
+                px1 = (a + c) / N; py1 = (a + b) / N
+                mi = 0.0
+                for cnt, pxk, pyk in [(a, px1, py1), (b, 1 - px1, py1), (c, px1, 1 - py1), (d, 1 - px1, 1 - py1)]:
+                    if cnt > 0 and pxk > 0 and pyk > 0:
+                        pr = cnt / N; mi += pr * np.log2(pr / (pxk * pyk))
+                hx = _bent(px1); hy = _bent(py1)
+                Um[i][j] = max(0.0, (2 * mi / (hx + hy)) if (hx + hy) > 1e-12 else 0.0)
+        Umap[region] = Um
+
+    per = ["kappa", "U", "co", "sep", "ixl", "iyl"]
+    feat_names = [("b:" if r == "barrel" else "e:") + f for r in regions for f in per]
+    pts = []
+    for i in range(K):
+        for j in range(K):
+            rec = dict(cx=float(grid[i]), cy=float(grid[j]))
+            vec = []
+            for region in regions:
+                D = sw[region]; L = lb[region]; tag = "b" if region == "barrel" else "e"
+                kap = float(D["kappa"][i][j]); U = float(Umap[region][i][j])
+                co = float(L["coinfo"][i][j]); sep = float(L["sep"][i][j])
+                ixl = float(L["ixl"][i]); iyl = float(L["iyl"][j]); NA = int(D["A"][i][j])
+                rec["sep_" + tag] = sep; rec["U_" + tag] = U; rec["co_" + tag] = co
+                rec["kap_" + tag] = kap; rec["NA_" + tag] = NA
+                vec += [kap, U, co, sep, ixl, iyl]
+            rec["_vec"] = vec
+            pts.append(rec)
+
+    X = np.array([p["_vec"] for p in pts], float)
+    mu = X.mean(0); sd = X.std(0); sd[sd < 1e-9] = 1.0
+    Z = (X - mu) / sd
+    med = np.median(X, 0); mad = np.median(np.abs(X - med), 0) * 1.4826; mad[mad < 1e-9] = 1.0
+    Zr = (X - med) / mad
+
+    embeddings = {}
+    for name, M, wh in (("standard", Z, False), ("whitened", Z, True), ("robust", Zr, False)):
+        coords, ev, Vt = _pca2(M, whiten=wh)
+        embeddings[name] = dict(coords=[[float(a), float(b)] for a, b in coords],
+                                ev=[float(e) for e in ev[:4]],
+                                load=[[float(v) for v in Vt[0]], [float(v) for v in Vt[1]]])
+
+    idx = {f: k for k, f in enumerate(feat_names)}
+    def col(f): return Z[:, idx[f]]
+    good = col("b:sep") + col("e:sep") - col("b:U") - col("e:U") - col("b:co") - col("e:co")
+    good = (good - good.min()) / (good.max() - good.min() + 1e-9)
+    for k, p in enumerate(pts):
+        p["good"] = float(good[k]); del p["_vec"]
+    return dict(points=pts, feat_names=feat_names, embeddings=embeddings)

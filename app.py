@@ -132,6 +132,10 @@ def page_pyfiles():
 def page_theory():
     return render_template("theory.html")
 
+@app.route("/topology")
+def page_topology():
+    return render_template("topology.html")
+
 @app.route("/favicon.ico")
 def favicon():
     return send_from_directory("static", "favicon.ico")
@@ -346,6 +350,34 @@ def api_sweep():
     Fast: MaxEnt flag computed once, grid via matmul."""
     g = int(request.args.get("grid", 25))
     return jsonify(data=helix_stats.sweep_overlap(DATA["background"], grid_n=g))
+
+
+@app.route("/api/sweep_label")
+def api_sweep_label():
+    """Label-aware sweep: co-information (redundancy/synergy of the two NN cuts
+    against signal) + per-axis and joint I(NN;label), over the cut grid.
+    Needs the signal MC; ?signal=mS35 (default) and ?prior=equal|mc."""
+    g = int(request.args.get("grid", 25))
+    sp = request.args.get("signal", "mS35")
+    prior = request.args.get("prior", "equal")
+    sig = DATA["signal"].get(sp)
+    if not sig or not os.path.exists(sig):
+        return jsonify(error=f"signal sample '{sp}' not found", data={}), 404
+    data = helix_stats.sweep_label(DATA["background"], sig, grid_n=g, prior=prior)
+    return jsonify(data=data, signal=sp, prior=prior)
+
+
+@app.route("/api/topology")
+def api_topology():
+    """Per-cut feature cloud + 2-D PCA embedding + composite good-score.
+    The 'data cloud' diagnostic for the topology view. ?signal=mS35 ?grid=25."""
+    g = int(request.args.get("grid", 25))
+    sp = request.args.get("signal", "mS35")
+    sig = DATA["signal"].get(sp)
+    if not sig or not os.path.exists(sig):
+        return jsonify(error=f"signal sample '{sp}' not found", data={}), 404
+    data = helix_stats.topology_cloud(DATA["background"], sig, grid_n=g)
+    return jsonify(data=data, signal=sp)
 
 
 @app.route("/api/full")

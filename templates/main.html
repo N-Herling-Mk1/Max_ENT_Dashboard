@@ -6,15 +6,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/helix.css?v=17">
 <style>
-/* top rectangle: [ console (left) ] [ ABCD+MaxEnt stacked ] [ RUN (right) ] */
-.dashtop{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:stretch}
-@media(max-width:1000px){.dashtop{grid-template-columns:1fr}}
+/* top rectangle: [ console ] [ RUN + MaxEnt ] [ ABCD settings ] — one row */
+.dashtop{display:grid;grid-template-columns:minmax(0,1fr) 320px 340px;gap:14px;align-items:stretch}
+@media(max-width:1200px){.dashtop{grid-template-columns:minmax(0,1fr) 320px}.zone-abcd{grid-column:1 / -1}}
+@media(max-width:760px){.dashtop{grid-template-columns:1fr}.zone-abcd{grid-column:auto}}
 .zone-console{display:flex;min-width:0}
 #terminal-mount{flex:1;display:flex;min-width:0}
 #terminal-mount .term{flex:1;display:flex;flex-direction:column;min-width:0}
 #terminal-mount .term-body{flex:1;max-height:none}
-.zone-right{display:flex;flex-direction:column;gap:16px;min-width:0}
-.zone-abcd{grid-column:1 / -1;min-width:0}
+.zone-right{display:flex;flex-direction:column;gap:14px;min-width:0}
+.zone-abcd{min-width:0}
+.zone-abcd #abcd-mount.panel{height:100%;box-sizing:border-box}
 .btn-ghost{font-family:var(--disp);font-size:11px;letter-spacing:.06em;color:var(--cyan);background:#000;
   border:1px solid var(--line2);border-radius:6px;padding:8px 12px;cursor:pointer;transition:.15s}
 .btn-ghost:hover{border-color:var(--cyan);box-shadow:0 0 10px rgba(40,224,208,.3)}
@@ -74,11 +76,11 @@
   <main id="results-mount" class="results"></main>
 </div>
 <script src="/static/js/run.js?v=3"></script>
-<script src="/static/js/abcd_panel.js?v=4"></script>
+<script src="/static/js/abcd_panel.js?v=5"></script>
 <script src="/static/js/maxent_panel.js?v=3"></script>
 <script src="/static/js/terminal.js?v=3"></script>
-<script src="/static/js/sweep_panel.js?v=3"></script>
+<script src="/static/js/sweep_panel.js?v=9"></script>
 <script src="/static/js/results.js?v=6"></script>
-<script src="/static/js/dashboard.js?v=4"></script>
+<script src="/static/js/dashboard.js?v=5"></script>
 </body>
 </html>

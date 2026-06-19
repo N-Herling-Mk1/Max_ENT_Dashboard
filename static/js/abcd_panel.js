@@ -35,7 +35,7 @@ window.ABCDPanel = (function () {
     const b = cfg.cuts.barrel, e = cfg.cuts.endcap;
     el.innerHTML =
       '<div class="ph"><span class="dot"></span><h2>ABCD &mdash; settings</h2></div>' +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:26px;align-items:start">' +
+      '<div style="display:flex;flex-direction:column;gap:14px">' +
         '<div>' +
           '<div class="muted" style="font-size:11px;margin-bottom:6px">NN score range (background)</div>' +
           '<table style="width:100%;font-size:11px"><thead><tr>' +

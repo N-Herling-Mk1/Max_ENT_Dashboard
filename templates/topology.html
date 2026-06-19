@@ -1,0 +1,228 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>topology</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/helix.css?v=16">
+<style>
+.topo-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:54px 20px;text-align:center}
+.topo-lock{font-size:40px;color:#e0a85a}
+.topo-run{font-family:Orbitron,sans-serif;font-size:13px;letter-spacing:.1em;color:#001014;background:var(--cyan);
+  border:0;border-radius:8px;padding:13px 26px;cursor:pointer;box-shadow:0 0 18px rgba(40,224,208,.35)}
+.topo-run:hover{filter:brightness(1.08)}
+.topo-run:disabled{opacity:.5;cursor:default;box-shadow:none}
+.topo-wrap{display:none}
+.seg{display:inline-flex;gap:4px;flex-wrap:wrap;align-items:center}
+.seg button{font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:.05em;color:var(--cyan);background:#000;
+  border:1px solid var(--line2);border-radius:6px;padding:5px 12px;cursor:pointer}
+.seg button.on{background:var(--cyan);color:#001014}
+.cap{font-size:11px;color:var(--muted)}
+#cloud{width:100%;display:block;border:1px solid var(--line2);border-radius:10px;background:#070a12}
+.kv{font-family:'Share Tech Mono',monospace;font-size:12px;color:#cfeefe}
+.tip{position:fixed;pointer-events:none;background:#05060a;border:1px solid var(--purple);border-radius:7px;
+  padding:7px 10px;font-family:'Share Tech Mono',monospace;font-size:11px;color:#cfeefe;display:none;z-index:50;line-height:1.5}
+input[type=range]{accent-color:var(--cyan);vertical-align:middle}
+.atile{border:1px solid var(--line2);border-radius:7px;padding:7px 9px;margin-bottom:6px;background:#0a0e18}
+.atile.opt{border-color:#2bd47a;box-shadow:0 0 10px rgba(43,212,122,.25)}
+</style></head><body>
+<div class="wrap">
+  <div class="panel">
+    <div class="ph"><span class="dot"></span><h2>topology &mdash; joint cut-space (barrel &amp; endcap)</h2>
+      <span class="seg" id="metric-seg" style="margin-left:auto;display:none">
+        <button data-m="areas" class="on">optimum areas</button>
+        <button data-m="good">good-score</button>
+        <button data-m="sep">sep (joint)</button>
+        <button data-m="U">U (worst)</button>
+        <button data-m="co">co (joint)</button>
+      </span>
+    </div>
+
+    <div class="topo-gate" id="gate">
+      <div class="topo-lock">&#128274;</div>
+      <div class="kv" style="max-width:600px;color:#b9c4d6;line-height:1.7">
+        Each point is <b>one shared cut</b> <span style="color:var(--cyan)">(cut_x, cut_y)</span> applied to both regions; its
+        feature vector concatenates <b>barrel</b> and <b>endcap</b> metrics (&#954;, U, co, sep, I(X;L), I(Y;L) &mdash; 12-D), so
+        every point is a realizable selection scored jointly. The diagnostic standardizes, runs PCA, and partitions the
+        feasible cuts into optimum areas. Locked until run.
+      </div>
+      <button class="topo-run" id="run">&#9654; RUN TOPOLOGY DIAGNOSTIC</button>
+      <div class="cap" id="gate-msg"></div>
+    </div>
+
+    <div class="topo-wrap" id="wrap">
+      <div id="controls" style="display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+        <label class="kv">min ABCD cut&nbsp; <input id="mincut" type="range" min="0" max="0.9" step="0.05" value="0.5" style="width:140px">
+          &nbsp;<b id="mincut-v" style="color:var(--cyan)">0.50</b></label>
+        <span class="seg" id="kseg"><span class="cap">areas:</span>
+          <button class="kbtn" data-k="3">3</button><button class="kbtn on" data-k="4">4</button><button class="kbtn" data-k="5">5</button></span>
+        <span class="seg" id="pcaseg"><span class="cap">PCA:</span>
+          <button class="pbtn on" data-p="standard">standard</button><button class="pbtn" data-p="whitened">whitened</button><button class="pbtn" data-p="robust">robust</button></span>
+        <span class="cap" id="feas-info"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start">
+        <div>
+          <canvas id="cloud"></canvas>
+          <div class="cap" id="axes" style="margin-top:6px;text-align:center"></div>
+        </div>
+        <div>
+          <div class="kv" style="color:#2bd47a;font-family:Orbitron,sans-serif;letter-spacing:.06em;font-size:12px;margin-bottom:6px">RECOMMENDED JOINT CUT</div>
+          <div class="kv" id="reco" style="margin-bottom:14px;line-height:1.6">&mdash;</div>
+          <div class="kv" style="color:var(--cyan);font-family:Orbitron,sans-serif;letter-spacing:.06em;font-size:12px;margin-bottom:6px">AREAS (best &rarr; worst)</div>
+          <div id="area-list"></div>
+          <div class="kv" style="color:var(--cyan);font-family:Orbitron,sans-serif;letter-spacing:.06em;font-size:12px;margin:12px 0 6px">PCA AXES</div>
+          <div class="kv" id="ev" style="line-height:1.6"></div>
+          <div class="cap" style="margin-top:12px;line-height:1.5">faded = below min cut · &#9733; = recommended<br>hull = optimum area · hover for both regions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+(function(){
+  var DATA=null, metric='areas', geom={}, signal='mS35', minCut=0.5, K=4, areas=null, pca='standard';
+  var cv=document.getElementById('cloud'), tip=document.getElementById('tip');
+  var TIER=['#2bd47a','#a0da39','#e0a85a','#e0707a','#b25dca'];
+  var VIR=['#440154','#46327e','#365c8d','#277f8e','#1fa187','#4ac16d','#a0da39','#fde725'];
+  var FN={'b:kappa':'barrel κ','b:U':'barrel U','b:co':'barrel co','b:sep':'barrel sep','b:ixl':'barrel I(X;L)','b:iyl':'barrel I(Y;L)',
+          'e:kappa':'endcap κ','e:U':'endcap U','e:co':'endcap co','e:sep':'endcap sep','e:ixl':'endcap I(X;L)','e:iyl':'endcap I(Y;L)'};
+
+  function ramp(stops,t){ t=Math.max(0,Math.min(1,t)); var s=t*(stops.length-1),i=Math.floor(s),f=s-i;
+    function hx(h){return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+    if(i>=stops.length-1)return 'rgb('+hx(stops[stops.length-1]).join(',')+')';
+    var a=hx(stops[i]),b=hx(stops[i+1]);
+    return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')'; }
+  function avg(arr,k){ if(!arr.length)return 0; var s=0; for(var i=0;i<arr.length;i++)s+=arr[i][k]; return s/arr.length; }
+  function feasible(p){ return p.cx>=minCut-1e-9 && p.cy>=minCut-1e-9; }
+  function sepJ(p){return p.sep_b+p.sep_e;} function uJ(p){return Math.max(p.U_b,p.U_e);} function coJ(p){return p.co_b+p.co_e;}
+
+  function setEmbedding(){ var emb=DATA.embeddings[pca]; DATA.points.forEach(function(p,k){ p.px=emb.coords[k][0]; p.py=emb.coords[k][1]; }); }
+
+  function kmeans(pts,k){
+    if(pts.length<k) k=Math.max(1,pts.length);
+    var sorted=pts.slice().sort(function(a,b){return a.good-b.good;}), cent=[];
+    for(var c=0;c<k;c++){ var idx=Math.min(sorted.length-1,Math.floor((c+0.5)/k*sorted.length)); cent.push([sorted[idx].px,sorted[idx].py]); }
+    var assign=new Array(pts.length).fill(0);
+    for(var it=0;it<25;it++){
+      for(var i=0;i<pts.length;i++){ var bd=1e18,bc=0;
+        for(var c=0;c<k;c++){ var dx=pts[i].px-cent[c][0],dy=pts[i].py-cent[c][1],d=dx*dx+dy*dy; if(d<bd){bd=d;bc=c;} } assign[i]=bc; }
+      var sx=new Array(k).fill(0),sy=new Array(k).fill(0),n=new Array(k).fill(0);
+      for(var i=0;i<pts.length;i++){ var c=assign[i]; sx[c]+=pts[i].px; sy[c]+=pts[i].py; n[c]++; }
+      for(var c=0;c<k;c++){ if(n[c]){ cent[c]=[sx[c]/n[c],sy[c]/n[c]]; } }
+    }
+    return {assign:assign,k:k};
+  }
+  function computeAreas(){
+    DATA.points.forEach(function(p){ p._feas=feasible(p); p._tier=-1; });
+    var feas=DATA.points.filter(function(p){return p._feas;});
+    if(!feas.length){ areas=null; return; }
+    var km=kmeans(feas,K), stats=[];
+    for(var c=0;c<km.k;c++){ var mem=feas.filter(function(p,i){return km.assign[i]===c;});
+      stats.push({n:mem.length,good:avg(mem,'good'),sepb:avg(mem,'sep_b'),sepe:avg(mem,'sep_e'),
+        ub:avg(mem,'U_b'),ue:avg(mem,'U_e'),cx:avg(mem,'cx'),cy:avg(mem,'cy'),members:mem}); }
+    stats.sort(function(a,b){return b.good-a.good;});
+    stats.forEach(function(s,t){ s.tier=t; s.members.forEach(function(p){p._tier=t;}); });
+    var best=feas.reduce(function(a,b){return b.good>a.good?b:a;});
+    areas={stats:stats,best:best,feasN:feas.length};
+  }
+  function hull(P){ if(P.length<3)return P.slice();
+    var pts=P.slice().sort(function(a,b){return a[0]-b[0]||a[1]-b[1];});
+    function cr(o,a,b){return (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);}
+    var lo=[]; for(var i=0;i<pts.length;i++){ while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],pts[i])<=0)lo.pop(); lo.push(pts[i]); }
+    var up=[]; for(var i=pts.length-1;i>=0;i--){ while(up.length>=2&&cr(up[up.length-2],up[up.length-1],pts[i])<=0)up.pop(); up.push(pts[i]); }
+    lo.pop(); up.pop(); return lo.concat(up); }
+
+  function colorOf(p){
+    if(!p._feas) return 'rgba(120,128,150,0.16)';
+    if(metric==='areas') return p._tier>=0?TIER[Math.min(p._tier,TIER.length-1)]:'#888';
+    if(metric==='good') return ramp(VIR,p.good);
+    if(metric==='sep')  return ramp(VIR,sepJ(p)/(geom.sepMax||1e-9));
+    if(metric==='U')    return ramp(['#04342C','#0F6E56','#5DCAA5','#E1F5EE'],1-Math.min(1,uJ(p)/(geom.uMax||1e-9)));
+    if(metric==='co'){ var t=Math.max(-1,Math.min(1,coJ(p)/(geom.coMax||1e-9))); return t>=0?ramp(['#F0F0F0','#000000'],t):ramp(['#F4D7D5','#C0140E'],-t); }
+    return '#888';
+  }
+  function star(ctx,x,y,R,col){ ctx.beginPath(); for(var i=0;i<10;i++){ var a=Math.PI/5*i-Math.PI/2,r=i%2?R*0.45:R,X=x+Math.cos(a)*r,Y=y+Math.sin(a)*r; i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);} ctx.closePath(); ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle='#000'; ctx.lineWidth=1; ctx.stroke(); }
+
+  function draw(){
+    if(!DATA) return;
+    var pts=DATA.points, dpr=window.devicePixelRatio||1, W=cv.clientWidth||640, H=460;
+    cv.width=W*dpr; cv.height=H*dpr; cv.style.height=H+'px';
+    var ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    var m={l:36,r:16,t:16,b:30};
+    var xs=pts.map(function(p){return p.px;}),ys=pts.map(function(p){return p.py;});
+    var x0=Math.min.apply(0,xs),x1=Math.max.apply(0,xs),y0=Math.min.apply(0,ys),y1=Math.max.apply(0,ys);
+    var px=function(v){return m.l+(v-x0)/(x1-x0+1e-9)*(W-m.l-m.r);};
+    var py=function(v){return H-m.b-(v-y0)/(y1-y0+1e-9)*(H-m.t-m.b);};
+    geom.sepMax=Math.max.apply(0,pts.map(sepJ)); geom.uMax=Math.max.apply(0,pts.map(uJ)); geom.coMax=Math.max.apply(0,pts.map(function(p){return Math.abs(coJ(p));}));
+    geom.px=px; geom.py=py;
+    ctx.strokeStyle='#1c2444'; ctx.lineWidth=1; ctx.strokeRect(m.l,m.t,W-m.l-m.r,H-m.t-m.b);
+    if(metric==='areas' && areas && areas.stats.length){
+      var opt=areas.stats[0].members.map(function(p){return [px(p.px),py(p.py)];}), h=hull(opt);
+      if(h.length>=3){ ctx.beginPath(); ctx.moveTo(h[0][0],h[0][1]); for(var i=1;i<h.length;i++)ctx.lineTo(h[i][0],h[i][1]); ctx.closePath();
+        ctx.fillStyle='rgba(43,212,122,0.10)'; ctx.fill(); ctx.strokeStyle='rgba(43,212,122,0.8)'; ctx.setLineDash([5,4]); ctx.lineWidth=1.6; ctx.stroke(); ctx.setLineDash([]); }
+    }
+    pts.forEach(function(p){ ctx.fillStyle=colorOf(p); var X=px(p.px),Y=py(p.py),r=p._feas?4.4:3.0;
+      ctx.beginPath(); ctx.arc(X,Y,r,0,6.2832); ctx.fill(); if(p._feas){ ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=.6; ctx.stroke(); } });
+    if(areas && areas.best){ var b=areas.best; star(ctx,px(b.px),py(b.py),9,'#fff'); }
+    var emb=DATA.embeddings[pca];
+    document.getElementById('axes').textContent='PC1 ('+(emb.ev[0]*100).toFixed(0)+'%) →   ↑ PC2 ('+(emb.ev[1]*100).toFixed(0)+'%)  ·  '+pca+' PCA';
+  }
+
+  function topLoad(load){ return load.map(function(v,k){return {f:DATA.feat_names[k],v:v};}).sort(function(a,b){return Math.abs(b.v)-Math.abs(a.v);}).slice(0,3); }
+  function refreshPanel(){
+    var emb=DATA.embeddings[pca];
+    if(!areas){ document.getElementById('reco').textContent='no feasible cuts at this minimum';
+      document.getElementById('area-list').innerHTML=''; document.getElementById('feas-info').textContent='0 feasible cuts'; }
+    else{
+      var b=areas.best;
+      document.getElementById('reco').innerHTML='<b style="color:#2bd47a">x='+b.cx.toFixed(2)+' y='+b.cy.toFixed(2)+'</b> · good='+b.good.toFixed(2)+'<br>'+
+        'barrel sep='+b.sep_b.toFixed(3)+' U='+(b.U_b*100).toFixed(2)+'% N_A='+b.NA_b+'<br>'+
+        'endcap sep='+b.sep_e.toFixed(3)+' U='+(b.U_e*100).toFixed(2)+'% N_A='+b.NA_e;
+      document.getElementById('feas-info').textContent=areas.feasN+' / '+DATA.points.length+' cuts feasible (≥ '+minCut.toFixed(2)+')';
+      document.getElementById('area-list').innerHTML=areas.stats.map(function(s){
+        return '<div class="atile'+(s.tier===0?' opt':'')+'"><div class="kv" style="display:flex;justify-content:space-between">'+
+          '<span style="color:'+TIER[Math.min(s.tier,TIER.length-1)]+'">'+(s.tier===0?'★ OPTIMUM':'tier '+s.tier)+'</span><span class="cap">n='+s.n+'</span></div>'+
+          '<div class="cap" style="margin-top:2px">good '+s.good.toFixed(2)+' · sep b/e '+s.sepb.toFixed(2)+'/'+s.sepe.toFixed(2)+' · U b/e '+(s.ub*100).toFixed(1)+'/'+(s.ue*100).toFixed(1)+'%</div>'+
+          '<div class="cap">centroid x='+s.cx.toFixed(2)+' y='+s.cy.toFixed(2)+'</div></div>';
+      }).join('');
+    }
+    document.getElementById('ev').innerHTML=
+      'PC1 '+(emb.ev[0]*100).toFixed(0)+'% ← '+topLoad(emb.load[0]).map(function(l){return (FN[l.f]||l.f)+(l.v>=0?' +':' −')+Math.abs(l.v).toFixed(2);}).join(', ')+'<br>'+
+      'PC2 '+(emb.ev[1]*100).toFixed(0)+'% ← '+topLoad(emb.load[1]).map(function(l){return (FN[l.f]||l.f)+(l.v>=0?' +':' −')+Math.abs(l.v).toFixed(2);}).join(', ');
+  }
+  function recompute(){ setEmbedding(); computeAreas(); draw(); refreshPanel(); }
+
+  cv.addEventListener('mousemove', function(e){
+    if(!DATA||!geom.px) return; var r=cv.getBoundingClientRect(),best=null,bd=99;
+    DATA.points.forEach(function(p){ var dx=geom.px(p.px)-(e.clientX-r.left),dy=geom.py(p.py)-(e.clientY-r.top),d=dx*dx+dy*dy; if(d<bd){bd=d;best=p;} });
+    if(best&&bd<90){ tip.style.display='block'; tip.style.left=(e.clientX+12)+'px'; tip.style.top=(e.clientY+12)+'px';
+      tip.innerHTML='cut x='+best.cx.toFixed(2)+' y='+best.cy.toFixed(2)+(best._feas?'':' (below min)')+'<br>'+
+        'barrel sep='+best.sep_b.toFixed(3)+' U='+(best.U_b*100).toFixed(2)+'%<br>'+
+        'endcap sep='+best.sep_e.toFixed(3)+' U='+(best.U_e*100).toFixed(2)+'%<br>good='+best.good.toFixed(2);
+    } else tip.style.display='none';
+  });
+  cv.addEventListener('mouseleave', function(){ tip.style.display='none'; });
+
+  document.getElementById('metric-seg').addEventListener('click', function(e){ var b=e.target.closest('button'); if(!b)return;
+    metric=b.dataset.m; this.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);}); draw(); });
+  document.getElementById('kseg').addEventListener('click', function(e){ var b=e.target.closest('.kbtn'); if(!b)return;
+    K=+b.dataset.k; document.querySelectorAll('.kbtn').forEach(function(x){x.classList.toggle('on',x===b);}); recompute(); });
+  document.getElementById('pcaseg').addEventListener('click', function(e){ var b=e.target.closest('.pbtn'); if(!b)return;
+    pca=b.dataset.p; document.querySelectorAll('.pbtn').forEach(function(x){x.classList.toggle('on',x===b);}); recompute(); });
+  document.getElementById('mincut').addEventListener('input', function(){ minCut=+this.value;
+    document.getElementById('mincut-v').textContent=minCut.toFixed(2); computeAreas(); draw(); refreshPanel(); });
+
+  document.getElementById('run').onclick=function(){
+    var btn=this,msg=document.getElementById('gate-msg'); btn.disabled=true; msg.textContent='computing joint feature cloud + PCA …';
+    fetch('/api/topology?grid=25&signal='+signal).then(function(r){return r.json();}).then(function(j){
+      if(!j.data||!j.data.points||!j.data.points.length){ msg.textContent='diagnostic failed'; btn.disabled=false; return; }
+      DATA=j.data;
+      document.getElementById('gate').style.display='none';
+      document.getElementById('wrap').style.display='block';
+      document.getElementById('metric-seg').style.display='inline-flex';
+      recompute();
+      try{ parent.postMessage({hx:'topo-unlocked'},'*'); }catch(_){}
+    }).catch(function(err){ msg.textContent='error: '+err; btn.disabled=false; });
+  };
+  window.addEventListener('resize', draw);
+})();
+</script></body></html>

@@ -18,7 +18,19 @@ document.addEventListener('DOMContentLoaded', function () {
         TerminalPanel.runDone('barrel ' + (b ? b.agreement.raw.toFixed(1) : '?') + '% · endcap ' + (e ? e.agreement.raw.toFixed(1) : '?') + '% match');
       } else {
         const sw = (await (await fetch('/api/sweep?grid=25')).json()).data || {};
-        SweepPanel.render(resultsMount, sw, { cuts: cfg.cuts });
+        // label-aware overlay (co-information / signal separation); non-fatal if signal absent
+        let sigTag = null;
+        try {
+          const lr = await (await fetch('/api/sweep_label?grid=25&signal=mS35')).json();
+          const lab = lr.data || {}; sigTag = lr.signal || null;
+          ['barrel', 'endcap'].forEach(r => {
+            if (sw[r] && lab[r]) Object.assign(sw[r], {
+              coinfo: lab[r].coinfo, sep: lab[r].sep, ixl: lab[r].ixl, iyl: lab[r].iyl,
+              n_sig: lab[r].n_sig, prior: lab[r].prior
+            });
+          });
+        } catch (_) { /* signal overlay optional */ }
+        SweepPanel.render(resultsMount, sw, { cuts: cfg.cuts, signal: sigTag });
         TerminalPanel.runDone('sweep ready · click a heatmap cell to set the cut');
       }
     } catch (e) { TerminalPanel.fail(String(e)); throw e; }
