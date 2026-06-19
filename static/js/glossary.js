@@ -9,5 +9,5 @@ function render(q=""){
     `</div>`
   ).join("") || `<div class="empty">no match</div>`;
 }
-fetch("/static/data/glossary.json").then(r=>r.json()).then(d=>{TERMS=d.terms;render();});
+fetch("/static/data/glossary.json?v=2").then(r=>r.json()).then(d=>{TERMS=d.terms;render();});
 document.getElementById("search").addEventListener("input",e=>render(e.target.value));

@@ -1,6 +1,6 @@
 /* terminal.js — faux engine console. Boots with a typewriter animation,
-   reports what will be graphed (regions, N, cut combinations), and logs
-   each run. Not a real stream — it surfaces the data the API returns. */
+   reports what will be graphed, then *generates* the % match / κ metric
+   reference, and logs each run. */
 window.TerminalPanel = (function () {
   let body;
   function line(html, cls) {

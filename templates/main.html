@@ -6,48 +6,78 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/css/helix.css?v=17">
 <style>
-.dash2{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
-@media(max-width:900px){.dash2{grid-template-columns:1fr}}
-.control-col{display:flex;flex-direction:column;gap:14px;position:sticky;top:16px}
-.results-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* top rectangle: [ console (left) ] [ ABCD+MaxEnt stacked ] [ RUN (right) ] */
+.dashtop{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:stretch}
+@media(max-width:1000px){.dashtop{grid-template-columns:1fr}}
+.zone-console{display:flex;min-width:0}
+#terminal-mount{flex:1;display:flex;min-width:0}
+#terminal-mount .term{flex:1;display:flex;flex-direction:column;min-width:0}
+#terminal-mount .term-body{flex:1;max-height:none}
+.zone-right{display:flex;flex-direction:column;gap:16px;min-width:0}
+.zone-abcd{grid-column:1 / -1;min-width:0}
 .btn-ghost{font-family:var(--disp);font-size:11px;letter-spacing:.06em;color:var(--cyan);background:#000;
   border:1px solid var(--line2);border-radius:6px;padding:8px 12px;cursor:pointer;transition:.15s}
 .btn-ghost:hover{border-color:var(--cyan);box-shadow:0 0 10px rgba(40,224,208,.3)}
+.results{margin-top:16px;min-width:0}
 .results .empty{padding:48px 16px;text-align:center;color:var(--muted)}
-/* mode segmented toggle */
 .modeseg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden;margin-bottom:10px;width:100%}
 .modeseg .mseg{flex:1;background:transparent;color:var(--muted);border:0;padding:7px 10px;font-family:var(--disp);font-size:11px;letter-spacing:.05em;cursor:pointer;transition:.15s}
 .modeseg .mseg.on{background:var(--cyan);color:#001014}
-/* faux terminal */
 .term{background:#04060a;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
 .term-head{font-family:var(--disp);font-size:11px;letter-spacing:.08em;color:var(--purple);padding:9px 13px;border-bottom:1px solid var(--line2);background:#080b12}
 .term-head .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-right:8px;vertical-align:1px}
-.term-body{font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.7;color:#cfeefe;padding:13px;min-height:150px;max-height:260px;overflow:auto}
+.term-body{font-family:'Share Tech Mono',monospace;font-size:12.5px;line-height:1.75;color:#cfeefe;padding:14px;min-height:230px;overflow:auto}
 .term-body .tl{white-space:pre-wrap}
 .tcyan{color:var(--cyan)} .tgrn{color:#5dca7a} .tmut{color:#5b6b86}
 .cursor{display:inline-block;width:8px;height:13px;background:var(--cyan);margin-left:3px;vertical-align:-2px;animation:blink 1s steps(1) infinite}
 @keyframes blink{50%{opacity:0}}
+/* compact full-width definition strip */
+.def-strip{margin-top:16px}
+.def-strip .row2{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:start}
+@media(max-width:760px){.def-strip .row2{grid-template-columns:1fr;gap:14px}}
+.def-strip p{font-size:12px;line-height:1.55;color:#b9c4d6;margin:0}
+.def-strip .dt{font-family:var(--disp);font-size:12px;letter-spacing:.04em;color:var(--cyan)}
+.def-strip .fml{font-family:'Share Tech Mono',monospace;color:#fff}
+.def-strip .warn2{color:#e0a85a}
+.def-strip .kbar{height:11px;border-radius:4px;margin:7px 0 2px;background:linear-gradient(90deg,#b2182b,#9aa3b8 28%,#7ec9a6 45%,#5dca7a 70%,#2166ac)}
+.def-strip .mbar{height:11px;border-radius:4px;margin:7px 0 2px;background:linear-gradient(90deg,#440154,#365c8d,#1fa187,#a0da39,#fde725)}
+.def-strip .kband{display:flex;justify-content:space-between;font-size:9px;color:#8893a8;font-family:'Share Tech Mono',monospace}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="dash2">
-    <main class="results-col">
-      <div id="terminal-mount"></div>
-      <div id="results-mount" class="results"></div>
-    </main>
-    <aside class="control-col">
+  <div class="dashtop">
+    <section class="zone-console"><div id="terminal-mount"></div></section>
+    <aside class="zone-right">
       <div id="run-mount" class="panel"></div>
-      <div id="abcd-mount" class="panel"></div>
       <div id="maxent-mount" class="panel"></div>
     </aside>
+    <div class="zone-abcd"><div id="abcd-mount" class="panel"></div></div>
   </div>
+
+  <div class="def-strip">
+    <div class="panel">
+      <div class="ph"><span class="dot"></span><h2>metric reference</h2></div>
+      <div class="row2">
+        <div>
+          <p><span class="dt">% match</span> &nbsp;<span class="fml">= (both + neither) / N</span> — raw agreement, 0–100%, <b>not</b> chance-corrected. <span class="warn2">Small region A drifts toward 100% for free; read it against the chance %.</span></p>
+          <div class="mbar"></div><div class="kband"><span>0%</span><span>50%</span><span>100%</span></div>
+        </div>
+        <div>
+          <p><span class="dt">κ (Cohen)</span> &nbsp;<span class="fml">= (p_match − p_chance) / (1 − p_chance)</span> — agreement beyond chance, −1…1. 0 none · .2 slight · .4 fair · .6 moderate · .8 substantial · 1 perfect. <b>Lead with κ.</b></p>
+          <div class="kbar"></div><div class="kband"><span>−1</span><span>0</span><span>.2</span><span>.4</span><span>.6</span><span>1</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main id="results-mount" class="results"></main>
 </div>
 <script src="/static/js/run.js?v=3"></script>
-<script src="/static/js/abcd_panel.js?v=3"></script>
+<script src="/static/js/abcd_panel.js?v=4"></script>
 <script src="/static/js/maxent_panel.js?v=2"></script>
-<script src="/static/js/terminal.js?v=1"></script>
-<script src="/static/js/sweep_panel.js?v=1"></script>
+<script src="/static/js/terminal.js?v=3"></script>
+<script src="/static/js/sweep_panel.js?v=3"></script>
 <script src="/static/js/results.js?v=5"></script>
 <script src="/static/js/dashboard.js?v=4"></script>
 </body>

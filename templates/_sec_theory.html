@@ -1,53 +1,122 @@
-<!-- ════════════════════════════════════════════════════════════════
-     PANEL: theory — ABCD as a special case of MaxEnt
-     Paste into templates/main.html  (see REWORK_NOTES.md for the exact
-     insertion point: between #sec-guide and #sec-takehome). Uses the
-     existing helix.css classes (.panel .ph .dot .psub .muted) + vars
-     --cyan / --purple / --faint already defined in helix.css.
-     ════════════════════════════════════════════════════════════════ -->
-<div class="panel" id="sec-theory">
-  <div class="ph"><span class="dot"></span><h2>theory &mdash; ABCD as a special case of MaxEnt</h2></div>
-  <div class="psub">The hypothesis that frames every panel below: <b>ABCD is MaxEnt with marginal constraints only</b>. Keep the measured NN1&ndash;NN2 dependence and you generalize it.</div>
+<!-- theory — white cards, black text, purple/orange/teal as accents only -->
+<style>
+.thy{--teal:#0f8c74;--orange:#c2691a;--purple:#5b51c9;color:#26262f}
+.thy h1.thy-title{font-family:'Orbitron',sans-serif;font-size:17px;letter-spacing:.05em;color:#16a394;margin:4px 0 14px}
+.thy .card{background:#fff;border:1px solid #e4e4ec;border-radius:10px;padding:16px 18px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.thy .card.teal{border-top:3px solid var(--teal)}
+.thy .card.orange{border-top:3px solid var(--orange)}
+.thy .card.purple{border-top:3px solid var(--purple)}
+.thy .hd{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:.05em;margin-bottom:8px}
+.thy .hd.teal{color:var(--teal)} .thy .hd.orange{color:var(--orange)} .thy .hd.purple{color:var(--purple)}
+.thy p{font-size:13px;line-height:1.62;color:#3a3a45;margin:6px 0}
+.thy .k-teal{color:var(--teal);font-weight:700}.thy .k-orange{color:var(--orange);font-weight:700}.thy .k-purple{color:var(--purple);font-weight:700}
+.thy ol{margin:8px 0 4px;padding-left:20px}.thy ol li{font-size:13px;line-height:1.6;color:#3a3a45;margin:6px 0}
+.thy .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:14px 0}
+.thy .note{font-size:11.5px;color:#7a7a88;margin-top:8px}
+/* math */
+.thy .mvar{font-family:Georgia,'Times New Roman',serif;font-style:italic}
+.thy .eq{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:5px;
+  font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#15151c;
+  background:#f6f7fb;border:1px solid #e4e4ec;border-radius:8px;padding:11px 12px;margin:11px 0}
+.thy .frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 3px;font-size:.92em}
+.thy .frac .num{border-bottom:1.6px solid #2a2a33;padding:0 7px 1px}
+.thy .frac .den{padding:1px 7px 0}
+.thy sub{font-size:.7em} .thy sup{font-size:.7em}
+.thy .op{color:#6a6a78}
+</style>
 
-  <div class="theory-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:14px 0;">
-    <div class="theory-card" style="border:1px solid rgba(255,138,60,.4);border-top:2px solid #ff8a3c;border-radius:4px;padding:12px 14px;background:rgba(255,138,60,.05);">
-      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:#ff8a3c;letter-spacing:.04em;margin-bottom:6px;">ABCD METHOD</div>
-      <div class="muted" style="font-size:12px;line-height:1.6;">Two discriminants cut the plane into four regions; A is the signal region. If they are independent for background, the counts factorize and A is predicted from the three control regions.</div>
-      <div style="font-family:'Share Tech Mono',monospace;font-size:13px;text-align:center;margin:9px 0 4px;color:var(--cyan);">N&#8336; = N&#7517; &middot; N&#7580; / N&#7589;</div>
-      <div class="muted" style="font-size:11px;">rests entirely on NN1 &perp; NN2 in background.</div>
+<div class="thy">
+  <h1 class="thy-title">&#9656; theory &mdash; ABCD as a special case of MaxEnt</h1>
+
+  <!-- MAIN HYPOTHESIS — top -->
+  <div class="card teal">
+    <div class="hd teal">&#9656; main hypothesis</div>
+    <p style="font-size:13.5px;color:#26262f">MaxEnt is a valid background-estimation method that <span class="k-teal">generalizes ABCD</span>. It predicts the signal-region count <span class="mvar">N</span><sub>A</sub> from the control regions under the marginal constraints <i>plus</i> the measured NN1&ndash;NN2 dependence &mdash; <b>equal to ABCD when the scores are independent, and more accurate when they are not.</b></p>
+    <div class="eq">
+      ABCD <span class="op">=</span> MaxEnt <span class="op">|</span><sub>&rho;=0</sub>
+      <span class="op" style="margin:0 10px">&sub;</span>
+      MaxEnt <span class="op">(</span>marginals <span class="op">+</span> &rho;<span class="op">)</span>
     </div>
-    <div class="theory-card" style="border:1px solid rgba(127,119,221,.45);border-top:2px solid var(--purple);border-radius:4px;padding:12px 14px;background:rgba(127,119,221,.06);">
-      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--purple);letter-spacing:.04em;margin-bottom:6px;">MAXENT PRINCIPLE</div>
-      <div class="muted" style="font-size:12px;line-height:1.6;">Among all distributions consistent with the measured constraints, take the one of maximum entropy &mdash; the least-committal fit (Jaynes 1957; uniqueness, Shore&ndash;Johnson 1980). Marginals only &rArr; p(x)p(y).</div>
-      <div style="font-family:'Share Tech Mono',monospace;font-size:13px;text-align:center;margin:9px 0 4px;color:var(--cyan);">max H(p)  s.t. &lang;constraints&rang;</div>
-      <div class="muted" style="font-size:11px;">add a correlation constraint &rArr; coupled joint.</div>
+    <p class="note"><b>test:</b> observed <span class="mvar">N</span><sub>A</sub> vs both predictions across regions &times; cut modes &mdash; MaxEnt should track the observed count at least as well as ABCD, and strictly better wherever the dependence is non-zero.</p>
+  </div>
+
+  <!-- intro cards -->
+  <div class="two">
+    <div class="card orange">
+      <div class="hd orange">ABCD method</div>
+      <p>Two discriminants cut the plane into four regions; <span class="k-orange">A</span> is the signal region. If the discriminants are independent for background, the counts factorize and A is predicted from the three control regions.</p>
+      <div class="eq"><span class="mvar">N</span><sub>A</sub> <span class="op">=</span> <span class="frac"><span class="num"><span class="mvar">N</span><sub>B</sub> <span class="op">&middot;</span> <span class="mvar">N</span><sub>C</sub></span><span class="den"><span class="mvar">N</span><sub>D</sub></span></span></div>
+      <p class="note">rests entirely on NN1 &perp; NN2 in background.</p>
+    </div>
+    <div class="card purple">
+      <div class="hd purple">MaxEnt principle</div>
+      <p>Among all distributions consistent with the measured constraints, take the one of <span class="k-purple">maximum entropy</span> &mdash; the least-committal fit (Jaynes 1957; uniqueness, Shore&ndash;Johnson 1980).</p>
+      <div class="eq">max <span class="mvar">H</span><span class="op">(</span><span class="mvar">p</span><span class="op">)</span> &nbsp;s.t.&nbsp; <span class="op">&lang;</span>constraints<span class="op">&rang;</span></div>
+      <p class="note">marginals only &rArr; <span class="mvar">p</span>(<span class="mvar">x</span>)<span class="mvar">p</span>(<span class="mvar">y</span>); add a correlation &rArr; coupled joint.</p>
     </div>
   </div>
 
-  <div class="theory-rel" style="border:1px solid var(--faint,#2a3550);border-radius:4px;padding:12px;margin:14px 0;">
-    <div class="muted" style="font-size:11px;margin-bottom:8px;letter-spacing:.04em;">SAME MACHINE &middot; DIFFERENT CONSTRAINT SET</div>
-    <svg viewBox="0 0 660 150" width="100%" style="max-width:660px;display:block;margin:0 auto;font-family:'Share Tech Mono',monospace;">
-      <rect x="6" y="6" width="648" height="104" rx="8" fill="rgba(127,119,221,.07)" stroke="var(--purple)" stroke-width="1.3"/>
-      <text x="22" y="28" fill="var(--purple)" font-size="12" font-family="Orbitron,sans-serif">MAXENT &mdash; all joints consistent with the constraints</text>
-      <text x="22" y="45" fill="#8aa0c8" font-size="10.5">marginals + measured dependence &middot; coupled joint p(x,y)</text>
-      <rect x="22" y="56" width="300" height="44" rx="6" fill="rgba(255,138,60,.10)" stroke="#ff8a3c" stroke-width="1.2"/>
-      <text x="36" y="76" fill="#ff8a3c" font-size="12" font-family="Orbitron,sans-serif">ABCD</text>
-      <text x="36" y="92" fill="#d9a070" font-size="10.5">marginals only &middot; &rho;=0 &middot; p(x)p(y)</text>
-      <path d="M332 70 L452 70" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#tar)"/>
-      <text x="346" y="64" fill="#a9a2e6" font-size="10">+ correlation</text>
-      <path d="M452 92 L332 92" stroke="#ff8a3c" stroke-width="1.5" marker-end="url(#tar2)"/>
-      <text x="470" y="74" fill="#8aa0c8" font-size="10">&rho;&rarr;0 reduces to ABCD</text>
-      <text x="22" y="134" fill="var(--cyan)" font-size="11.5">ABCD &sub; MaxEnt &mdash; the independence-limit special case, not a rival method.</text>
+  <!-- relation diagram -->
+  <div class="card">
+    <div class="hd" style="color:#5b51c9">same machine &middot; different constraint set</div>
+    <svg viewBox="0 0 660 150" width="100%" style="max-width:680px;display:block;margin:6px auto 0;font-family:'Share Tech Mono',monospace">
+      <rect x="6" y="6" width="648" height="104" rx="8" fill="#f6f4fc" stroke="#5b51c9" stroke-width="1.3"/>
+      <text x="22" y="28" fill="#5b51c9" font-size="12" font-family="Orbitron,sans-serif">MAXENT &mdash; all joints consistent with the constraints</text>
+      <text x="22" y="45" fill="#5a5a68" font-size="10.5">marginals + measured dependence &middot; coupled joint p(x,y)</text>
+      <rect x="22" y="56" width="300" height="44" rx="6" fill="#fff" stroke="#c2691a" stroke-width="1.3"/>
+      <text x="36" y="76" fill="#c2691a" font-size="12" font-family="Orbitron,sans-serif">ABCD</text>
+      <text x="36" y="92" fill="#7a6a55" font-size="10.5">marginals only &middot; &rho;=0 &middot; p(x)p(y)</text>
+      <path d="M332 70 L452 70" stroke="#5b51c9" stroke-width="1.5" marker-end="url(#tar)"/>
+      <text x="346" y="64" fill="#5b51c9" font-size="10">+ correlation</text>
+      <path d="M452 92 L332 92" stroke="#c2691a" stroke-width="1.5" marker-end="url(#tar2)"/>
+      <text x="470" y="74" fill="#5a5a68" font-size="10">&rho;&rarr;0 reduces to ABCD</text>
+      <text x="22" y="134" fill="#0f8c74" font-size="11.5">ABCD &sub; MaxEnt &mdash; the independence-limit special case, not a rival method.</text>
       <defs>
-        <marker id="tar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="var(--purple)"/></marker>
-        <marker id="tar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#ff8a3c"/></marker>
+        <marker id="tar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#5b51c9"/></marker>
+        <marker id="tar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#c2691a"/></marker>
       </defs>
     </svg>
   </div>
 
-  <div class="theory-hyp" style="border:1px solid var(--cyan);border-left:3px solid var(--cyan);border-radius:4px;padding:12px 14px;background:rgba(0,229,255,.05);">
-    <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);letter-spacing:.04em;margin-bottom:5px;">&#9656; MAIN HYPOTHESIS</div>
-    <div style="font-size:13px;line-height:1.65;">MaxEnt is a valid background-estimation method that <b>generalizes ABCD</b>: it predicts N&#8336; from the control regions under marginal constraints <i>plus</i> the measured NN1&ndash;NN2 dependence &mdash; equal to ABCD when the scores are independent, and more accurate when they are not.</div>
-    <div class="muted" style="font-size:11px;margin-top:8px;">test &mdash; observed N&#8336; vs both predictions across regions &times; cut modes; MaxEnt should track observed at least as well, strictly better where dependence is nonzero.</div>
+  <!-- HOW ABCD IS CALCULATED -->
+  <div class="card orange">
+    <div class="hd orange">how ABCD is calculated</div>
+    <p>Split the NN1&ndash;NN2 plane at the cut <span class="op">(</span><span class="mvar">c</span><sub>x</sub>, <span class="mvar">c</span><sub>y</sub><span class="op">)</span> into four quadrants:</p>
+    <div class="eq" style="font-size:14px">
+      <span class="k-orange">A</span>: x&gt;c<sub>x</sub>, y&gt;c<sub>y</sub> &nbsp;<span class="op">|</span>&nbsp;
+      B: x&le;c<sub>x</sub>, y&gt;c<sub>y</sub> &nbsp;<span class="op">|</span>&nbsp;
+      C: x&gt;c<sub>x</sub>, y&le;c<sub>y</sub> &nbsp;<span class="op">|</span>&nbsp;
+      D: x&le;c<sub>x</sub>, y&le;c<sub>y</sub>
+    </div>
+    <ol>
+      <li>Count background events in the three control regions <span class="mvar">N</span><sub>B</sub>, <span class="mvar">N</span><sub>C</sub>, <span class="mvar">N</span><sub>D</sub> (and the observed <span class="mvar">N</span><sub>A</sub> for closure).</li>
+      <li>Assume the two scores are <b>independent</b> in background. Then the odds of passing the y-cut are the same on either side of the x-cut:
+        <div class="eq"><span class="frac"><span class="num"><span class="mvar">N</span><sub>A</sub></span><span class="den"><span class="mvar">N</span><sub>C</sub></span></span> <span class="op">=</span> <span class="frac"><span class="num"><span class="mvar">N</span><sub>B</sub></span><span class="den"><span class="mvar">N</span><sub>D</sub></span></span></div>
+      </li>
+      <li>Solve for the signal region:
+        <div class="eq"><span class="mvar">N</span><sub>A</sub><sup>pred</sup> <span class="op">=</span> <span class="frac"><span class="num"><span class="mvar">N</span><sub>B</sub> <span class="op">&middot;</span> <span class="mvar">N</span><sub>C</sub></span><span class="den"><span class="mvar">N</span><sub>D</sub></span></span></div>
+      </li>
+      <li><b>Closure</b>: compare predicted to observed. A ratio <span class="mvar">N</span><sub>A</sub><sup>obs</sup>/<span class="mvar">N</span><sub>A</sub><sup>pred</sup> away from 1 means the independence assumption fails &mdash; the method's only assumption.</li>
+    </ol>
   </div>
+
+  <!-- HOW MAXENT IS CALCULATED -->
+  <div class="card purple">
+    <div class="hd purple">how MaxEntropy is calculated</div>
+    <p>Maximize the entropy of the joint subject to what is actually measured. Entropy and constraints:</p>
+    <div class="eq"><span class="mvar">H</span><span class="op">(</span><span class="mvar">p</span><span class="op">)</span> <span class="op">=</span> &minus;<span style="font-size:1.2em">&sum;</span> <span class="mvar">p</span><span class="op">(</span><span class="mvar">x,y</span><span class="op">)</span> ln <span class="mvar">p</span><span class="op">(</span><span class="mvar">x,y</span><span class="op">)</span></div>
+    <ol>
+      <li>Fix the empirical <b>marginals</b> <span class="mvar">p</span>(<span class="mvar">x</span>), <span class="mvar">p</span>(<span class="mvar">y</span>) measured from the data.</li>
+      <li>Maximizing <span class="mvar">H</span> under those constraints (Lagrange multipliers) gives the <span class="k-purple">exponential / Boltzmann family</span>:
+        <div class="eq"><span class="mvar">p</span><span class="op">(</span><span class="mvar">x,y</span><span class="op">)</span> <span class="op">=</span> <span class="frac"><span class="num">1</span><span class="den"><span class="mvar">Z</span></span></span> exp<span class="op">(</span> &lambda;<sub>x</sub> <span class="op">+</span> &mu;<sub>y</sub> <span class="op">+</span> &theta;&middot;<span class="mvar">g</span><span class="op">(</span><span class="mvar">x,y</span><span class="op">)</span> <span class="op">)</span></div>
+      </li>
+      <li>With <b>marginals only</b> (no coupling term, &theta;=0) this is exactly <span class="mvar">p</span>(<span class="mvar">x</span>)<span class="mvar">p</span>(<span class="mvar">y</span>) &mdash; the <span class="k-orange">ABCD</span> prediction.</li>
+      <li>Add <b>one</b> measured constraint, the correlation &rho;. The max-entropy joint for fixed marginals + a correlation is the <b>Gaussian copula</b>. &rho; is measured in the <i>control</i> regions, so it is non-circular.</li>
+      <li>Predict by Monte-Carlo: sample <span class="op">(</span><span class="mvar">x,y</span><span class="op">)</span> from the copula, count the fraction landing in A, scale by <span class="mvar">N</span>:
+        <div class="eq"><span class="mvar">N</span><sub>A</sub><sup>pred</sup> <span class="op">=</span> <span class="mvar">N</span> <span class="op">&middot;</span> <span class="mvar">P</span><sub>&rho;</sub><span class="op">(</span>x&gt;c<sub>x</sub>, y&gt;c<sub>y</sub><span class="op">)</span></div>
+      </li>
+      <li>As <span class="k-purple">&rho;&rarr;0</span> the copula factorizes and the prediction collapses back to ABCD.</li>
+    </ol>
+  </div>
+
 </div>

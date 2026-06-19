@@ -1,30 +1,79 @@
 {
   "terms": [
-    {"term": "Mutual information  I(X;Y)", "cat": "dependence",
-     "def": "A single scalar functional of the joint distribution: the KL divergence between the joint and the product of marginals, D(p(x,y) ‖ p(x)p(y)). Zero iff X and Y are independent. A property of the ensemble, not of any event — there is no per-event MI."},
-    {"term": "Distance correlation  dCor", "cat": "dependence",
-     "def": "A dependence measure in [0,1] that is zero iff independent and captures nonlinear dependence (unlike Pearson r). Needs no binning, so it avoids the bin-count bias of estimated MI; O(n²), trivial at the real per-region sample sizes."},
-    {"term": "Pearson r", "cat": "dependence",
-     "def": "Linear correlation — the linear shadow of the full dependence. Can read ~0 while strong nonlinear dependence (and broken ABCD closure) is present, which is exactly the barrel."},
-    {"term": "pointwise MI  pmi(x,y)", "cat": "dependence",
-     "def": "log[ p(x,y) / (p(x)p(y)) ], a field over the plane whose mean is I(X;Y). Shows WHERE the dependence lives; flat (~0) for an independent background, structured for signal."},
-    {"term": "ABCD method", "cat": "estimation",
-     "def": "Background estimate in the signal region A from three control regions: N_A = N_B·N_C/N_D. Valid only if the two discriminants are independent for background. Per-event, an event is 'ABCD-flagged' if it falls in region A (high NN1 & high NN2)."},
-    {"term": "ABCD closure ratio", "cat": "estimation",
-     "def": "observed/predicted in region A. =1 when the method closes. It is exactly the 2-bin coarse-grained mutual information (the sample odds ratio); deviation from 1 is binned MI. Endcap ≈0.83, barrel ≈1.79."},
-    {"term": "MaxEnt surprise  S(x)", "cat": "maxent",
-     "def": "S(x) = Σ_features −log p_feature(x), the per-event anomaly score under a background reference of independent maximum-entropy marginals. High S = anomalous. Being a sum of marginal log-densities, it is −log p₀ for a product-of-marginals p₀ — so it cannot see cross-feature MI."},
-    {"term": "MaxEnt reference / sideband", "cat": "maxent",
-     "def": "The per-feature MaxEnt laws are fit on a background-only, NN-free sideband so the reference inherits zero NN information. (Early rounds fit on ABCD's region D, which smuggled NN knowledge back in — the circularity fixed by switching to a physics-only sideband.)"},
-    {"term": "Case A (endcap)", "cat": "regions",
-     "def": "Bulk-driven region. Natural fit = Gaussian on ~20 features. ABCD closes; r, closure and I agree. ~97% MaxEnt/ABCD agreement, r(S,NN1)≈−0.001."},
-    {"term": "Case B (barrel)", "cat": "regions",
-     "def": "Tail-driven region. Natural fit = Poisson on ~13 integer hit-count features + Gaussian on ~8 continuous. ABCD fails closure; r stays ~0 while closure and I break. Surprise scale shifts 43× Gaussian→Poisson."},
-    {"term": "Csiszár–Pythagoras", "cat": "geometry",
-     "def": "D(p ‖ U) = D(p ‖ p₀) + D(p₀ ‖ U), cross term zero. The MaxEnt background p₀ is the foot of the perpendicular; the signal residual D(p ‖ p₀) = I(X;Y) is the orthogonal leg. The MI is the orthogonal component, not the background."},
-    {"term": "Boundary jumper", "cat": "agreement",
-     "def": "An event the two methods classify differently — the off-diagonal cells. MaxEnt-only (anomalous physics, NN-saturated) and ABCD-only (bulk-normal physics, cornered by NN alone) are two distinct physical types; the absence of a physical signature in the ABCD-only set is itself its signature."},
-    {"term": "Poisson MaxEnt caveat", "cat": "maxent",
-     "def": "Poisson is NOT the MaxEnt law from a bare mean on the integers (that is the geometric). It is MaxEnt within the Bernoulli-sum / ultra-log-concave class (Harremoës 2001; Johnson 2007) — which is exactly detector hit accumulation."}
+    {
+      "term": "Mutual information  I(X;Y)",
+      "cat": "dependence",
+      "def": "A single scalar functional of the joint distribution: the KL divergence between the joint and the product of marginals, D(p(x,y) ‖ p(x)p(y)). Zero iff X and Y are independent. A property of the ensemble, not of any event — there is no per-event MI."
+    },
+    {
+      "term": "Distance correlation  dCor",
+      "cat": "dependence",
+      "def": "A dependence measure in [0,1] that is zero iff independent and captures nonlinear dependence (unlike Pearson r). Needs no binning, so it avoids the bin-count bias of estimated MI; O(n²), trivial at the real per-region sample sizes."
+    },
+    {
+      "term": "Pearson r",
+      "cat": "dependence",
+      "def": "Linear correlation — the linear shadow of the full dependence. Can read ~0 while strong nonlinear dependence (and broken ABCD closure) is present, which is exactly the barrel."
+    },
+    {
+      "term": "pointwise MI  pmi(x,y)",
+      "cat": "dependence",
+      "def": "log[ p(x,y) / (p(x)p(y)) ], a field over the plane whose mean is I(X;Y). Shows WHERE the dependence lives; flat (~0) for an independent background, structured for signal."
+    },
+    {
+      "term": "ABCD method",
+      "cat": "estimation",
+      "def": "Background estimate in the signal region A from three control regions: N_A = N_B·N_C/N_D. Valid only if the two discriminants are independent for background. Per-event, an event is 'ABCD-flagged' if it falls in region A (high NN1 & high NN2)."
+    },
+    {
+      "term": "ABCD closure ratio",
+      "cat": "estimation",
+      "def": "observed/predicted in region A. =1 when the method closes. It is exactly the 2-bin coarse-grained mutual information (the sample odds ratio); deviation from 1 is binned MI. Endcap ≈0.83, barrel ≈1.79."
+    },
+    {
+      "term": "MaxEnt surprise  S(x)",
+      "cat": "maxent",
+      "def": "S(x) = Σ_features −log p_feature(x), the per-event anomaly score under a background reference of independent maximum-entropy marginals. High S = anomalous. Being a sum of marginal log-densities, it is −log p₀ for a product-of-marginals p₀ — so it cannot see cross-feature MI."
+    },
+    {
+      "term": "MaxEnt reference / sideband",
+      "cat": "maxent",
+      "def": "The per-feature MaxEnt laws are fit on a background-only, NN-free sideband so the reference inherits zero NN information. (Early rounds fit on ABCD's region D, which smuggled NN knowledge back in — the circularity fixed by switching to a physics-only sideband.)"
+    },
+    {
+      "term": "Case A (endcap)",
+      "cat": "regions",
+      "def": "Bulk-driven region. Natural fit = Gaussian on ~20 features. ABCD closes; r, closure and I agree. ~97% MaxEnt/ABCD agreement, r(S,NN1)≈−0.001."
+    },
+    {
+      "term": "Case B (barrel)",
+      "cat": "regions",
+      "def": "Tail-driven region. Natural fit = Poisson on ~13 integer hit-count features + Gaussian on ~8 continuous. ABCD fails closure; r stays ~0 while closure and I break. Surprise scale shifts 43× Gaussian→Poisson."
+    },
+    {
+      "term": "Csiszár–Pythagoras",
+      "cat": "geometry",
+      "def": "D(p ‖ U) = D(p ‖ p₀) + D(p₀ ‖ U), cross term zero. The MaxEnt background p₀ is the foot of the perpendicular; the signal residual D(p ‖ p₀) = I(X;Y) is the orthogonal leg. The MI is the orthogonal component, not the background."
+    },
+    {
+      "term": "Boundary jumper",
+      "cat": "agreement",
+      "def": "An event the two methods classify differently — the off-diagonal cells. MaxEnt-only (anomalous physics, NN-saturated) and ABCD-only (bulk-normal physics, cornered by NN alone) are two distinct physical types; the absence of a physical signature in the ABCD-only set is itself its signature."
+    },
+    {
+      "term": "Poisson MaxEnt caveat",
+      "cat": "maxent",
+      "def": "Poisson is NOT the MaxEnt law from a bare mean on the integers (that is the geometric). It is MaxEnt within the Bernoulli-sum / ultra-log-concave class (Harremoës 2001; Johnson 2007) — which is exactly detector hit accumulation."
+    },
+    {
+      "term": "% match (raw agreement)",
+      "cat": "agreement",
+      "def": "The fraction of events on which ABCD and MaxEnt give the same per-event verdict: (both + neither) / N. Range 0–100%. It is NOT corrected for chance — when region A is small the 'neither' cell dominates and the score drifts toward 100% for free, so it must always be read against its chance baseline (the gap, not the number, is informative)."
+    },
+    {
+      "term": "Cohen's κ (kappa)",
+      "cat": "agreement",
+      "def": "Chance-corrected agreement between the two methods: κ = (p_match − p_chance) / (1 − p_chance), where p_chance is the match rate expected if each method kept its own flag rate but the two were independent. Range −1 to 1; 0 = no agreement beyond luck, 1 = perfect. Landis–Koch bands: <0 none, 0–.20 slight, .21–.40 fair, .41–.60 moderate, .61–.80 substantial, .81–1 almost perfect. Survives the small-region (prevalence) problem that inflates raw % match, so it is the headline number."
+    }
   ]
 }

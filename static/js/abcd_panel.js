@@ -35,17 +35,23 @@ window.ABCDPanel = (function () {
     const b = cfg.cuts.barrel, e = cfg.cuts.endcap;
     el.innerHTML =
       '<div class="ph"><span class="dot"></span><h2>ABCD &mdash; settings</h2></div>' +
-      '<div class="muted" style="font-size:11px;margin-bottom:6px">NN score range (background)</div>' +
-      '<table style="width:100%;font-size:11px;margin-bottom:10px"><thead><tr>' +
-      '<th style="text-align:left">score</th><th class="num">min</th><th class="num">median</th><th class="num">max</th>' +
-      '</tr></thead><tbody>' + statRows(stats) + '</tbody></table>' +
-      '<div class="muted" style="font-size:11px;margin-bottom:6px">cut thresholds (region A = both &gt; cut)</div>' +
-      '<div style="display:flex;flex-direction:column;gap:6px">' +
-      inputRow('bx', 'barrel x', b[0]) + inputRow('by', 'barrel y', b[1]) +
-      inputRow('ex', 'endcap x', e[0]) + inputRow('ey', 'endcap y', e[1]) +
-      '</div>' +
-      '<button id="abcd-apply" class="btn-ghost" style="margin-top:10px;width:100%">save thresholds</button>' +
-      '<div id="abcd-msg" class="muted" style="font-size:10px;margin-top:6px;text-align:center"></div>';
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:26px;align-items:start">' +
+        '<div>' +
+          '<div class="muted" style="font-size:11px;margin-bottom:6px">NN score range (background)</div>' +
+          '<table style="width:100%;font-size:11px"><thead><tr>' +
+          '<th style="text-align:left">score</th><th class="num">min</th><th class="num">median</th><th class="num">max</th>' +
+          '</tr></thead><tbody>' + statRows(stats) + '</tbody></table>' +
+        '</div>' +
+        '<div>' +
+          '<div class="muted" style="font-size:11px;margin-bottom:6px">cut thresholds (region A = both &gt; cut)</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 18px">' +
+          inputRow('bx', 'barrel x', b[0]) + inputRow('by', 'barrel y', b[1]) +
+          inputRow('ex', 'endcap x', e[0]) + inputRow('ey', 'endcap y', e[1]) +
+          '</div>' +
+          '<button id="abcd-apply" class="btn-ghost" style="margin-top:12px;width:100%">save thresholds</button>' +
+          '<div id="abcd-msg" class="muted" style="font-size:10px;margin-top:6px;text-align:center"></div>' +
+        '</div>' +
+      '</div>';
 
     function setMode(m){
       const sweep = (m === 'sweep');

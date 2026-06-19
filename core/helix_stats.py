@@ -102,13 +102,15 @@ def abcd_compatibility(closure, dcor, mi):
 
 # ─────────── MaxEnt N_A predictor: marginals + 1 correlation ────────
 def _normal_scores(v, ref):
-    """Map values to normal scores via empirical rank against a normal ref grid."""
+    """Map values to normal scores via empirical rank against a (pre-sorted)
+    normal ref grid. np.interp is far faster than np.quantile for large v."""
     order = np.argsort(np.argsort(v))
     q = (order + 0.5) / len(v)
-    return np.quantile(ref, q)
+    cdf = (np.arange(len(ref)) + 0.5) / len(ref)
+    return np.interp(q, cdf, ref)
 
 
-def maxent_predict_na(x, y, cut_x, cut_y, n_mc=60000, n_boot=120, seed=0):
+def maxent_predict_na(x, y, cut_x, cut_y, n_mc=20000, n_boot=40, seed=0):
     """Gaussian-copula MaxEnt: fixed empirical marginals + ONE correlation ρ,
     ρ measured in the CONTROL regions (not A) so it is non-circular. The
     maximum-entropy joint for fixed marginals + given correlation is the
@@ -127,13 +129,14 @@ def maxent_predict_na(x, y, cut_x, cut_y, n_mc=60000, n_boot=120, seed=0):
         return float(np.clip(r if np.isfinite(r) else 0.0, -0.95, 0.95))
 
     sx = np.sort(x); sy = np.sort(y)
+    cdf = (np.arange(N) + 0.5) / N           # empirical CDF grid for inverse-sampling
 
-    def p_A(rho, rs):
+    def p_A(rho, rs, _sx=sx, _sy=sy, _cdf=cdf):
         z1 = rs.standard_normal(n_mc)
         z2 = rho * z1 + np.sqrt(max(1 - rho * rho, 0)) * rs.standard_normal(n_mc)
         u = 0.5 * (1 + _erf(z1 / np.sqrt(2)))
         v = 0.5 * (1 + _erf(z2 / np.sqrt(2)))
-        xx = np.quantile(sx, u); yy = np.quantile(sy, v)
+        xx = np.interp(u, _cdf, _sx); yy = np.interp(v, _cdf, _sy)   # C-fast inverse-CDF
         return float(np.mean((xx > cut_x) & (yy > cut_y)))
 
     rho_hat = rho_ctrl(x[ctrl], y[ctrl])
@@ -185,9 +188,11 @@ def pmi_jumpers(x, y, bins=16, top_q=0.90, seed=0):
 
 
 # ──────────────────────── one-shot driver ──────────────────────────
-def run_full(background_csv, cfg=None, bins=16):
+def run_full(background_csv, cfg=None, bins=16, modes=("absolute",)):
     """Compute the full background tier for every region × cutmode, once.
-    Returns a dict the dashboard selectors index by region+cutmode."""
+    Returns a dict the dashboard selectors index by region+cutmode.
+    modes defaults to ('absolute',) — the dashboard only shows that; pass
+    ('absolute','quantile') for both."""
     base = {**H.DEFAULTS, **(cfg or {})}
     out = {}
     for region in ("barrel", "endcap"):
@@ -203,7 +208,7 @@ def run_full(background_csv, cfg=None, bins=16):
         bgslice = {k: (v[m] if hasattr(v, "__len__") and len(v) == len(m) else v)
                    for k, v in bg.items()}
         regime = count_regime(x, y, bins)
-        for mode in ("absolute", "quantile"):
+        for mode in modes:
             if mode == "quantile":
                 qx, qy = base["quantile"]
                 cx, cy = float(np.quantile(x, qx)), float(np.quantile(y, qy))
