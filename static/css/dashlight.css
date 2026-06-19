@@ -87,3 +87,162 @@
 .dash .tbl-wrap{overflow:auto;max-height:340px;border:1px solid #e2e8f0;border-radius:8px}
 .dash .grid.g2>*{min-width:0}
 .dash .rsub{font-size:10px;color:#94a3b8;font-weight:400}
+
+/* ── radio selectors (compute-once / display-many control) ── */
+.radioset{display:flex;gap:6px;flex-wrap:wrap}
+.radioset .radio{position:relative;display:inline-flex;align-items:center;cursor:pointer;
+  padding:5px 12px;border:1px solid rgba(0,229,255,.22);border-radius:4px;
+  font-family:"Share Tech Mono",monospace;font-size:12px;color:var(--faint);
+  background:rgba(0,229,255,.03);transition:all .12s;user-select:none}
+.radioset .radio input{position:absolute;opacity:0;pointer-events:none}
+.radioset .radio:hover{border-color:rgba(0,229,255,.5);color:var(--cyan)}
+.radioset .radio.sel{border-color:var(--cyan);color:var(--cyan);
+  background:rgba(0,229,255,.12);box-shadow:0 0 0 1px var(--cyan) inset}
+.run-note{font-size:10.5px;margin-top:8px;max-width:320px;line-height:1.4}
+.ctrl-run{display:flex;flex-direction:column;align-items:flex-start}
+
+/* ── mass-point color system (consistent across all panels) ── */
+/* mS5=blue  mS16=teal  mS35=purple(primary)  mS55=amber */
+:root{ --m5:#3b82f6; --m16:#14b8a6; --m35:#8b3fe8; --m55:#f59e0b; }
+.dash .radioset .radio.m5.sel{ border-color:var(--m5); color:var(--m5); box-shadow:0 0 0 1px var(--m5) inset; background:rgba(59,130,246,.12);}
+.dash .radioset .radio.m16.sel{border-color:var(--m16);color:var(--m16);box-shadow:0 0 0 1px var(--m16) inset;background:rgba(20,184,166,.12);}
+.dash .radioset .radio.m35.sel{border-color:var(--m35);color:var(--m35);box-shadow:0 0 0 1px var(--m35) inset;background:rgba(139,63,232,.12);}
+.dash .radioset .radio.m55.sel{border-color:var(--m55);color:var(--m55);box-shadow:0 0 0 1px var(--m55) inset;background:rgba(245,158,11,.12);}
+
+/* ── always-visible panel subtitle (the "what am I looking at" helper) ── */
+.dash .panel .psub{
+  font-size:11.5px;line-height:1.55;color:#475569;
+  margin:2px 0 14px;padding:9px 12px;
+  border-left:3px solid var(--m35);border-radius:0 6px 6px 0;
+  background:rgba(139,63,232,.06);max-width:none;}
+
+/* ── small-multiples grid for the ALL view (plane plots) ── */
+.dash .smgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
+.dash .smcard{border:1px solid rgba(15,23,42,.12);border-radius:6px;padding:6px;background:#fff}
+.dash .smcard .smtag{font-family:"Share Tech Mono",monospace;font-size:11px;font-weight:700;
+  padding:2px 8px;border-radius:3px;display:inline-block;margin-bottom:4px;color:#fff}
+.dash .smcard.m5 .smtag{background:var(--m5)} .dash .smcard.m16 .smtag{background:var(--m16)}
+.dash .smcard.m35 .smtag{background:var(--m35)} .dash .smcard.m55 .smtag{background:var(--m55)}
+.dash .smcard img{width:100%;display:block;border-radius:3px}
+
+/* ── multi-series legend chip (HTML panels in ALL mode) ── */
+.dash .mlegend{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 10px;font-size:11px}
+.dash .mlegend .mc{display:inline-flex;align-items:center;gap:5px}
+.dash .mlegend .sw{width:11px;height:11px;border-radius:2px;display:inline-block}
+
+
+/* ── REAL radio buttons (actual circular inputs) ── */
+.dash .radios{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.dash .radios label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+  font-family:"Share Tech Mono",monospace;font-size:13px;color:#334155;user-select:none}
+.dash .radios input[type=radio]{
+  appearance:none;-webkit-appearance:none;width:16px;height:16px;margin:0;border-radius:50%;
+  border:2px solid #8b3fe8;background:#fff;display:inline-grid;place-content:center;cursor:pointer;
+  transition:all .12s}
+.dash .radios input[type=radio]::before{content:"";width:8px;height:8px;border-radius:50%;
+  transform:scale(0);transition:transform .12s;background:#8b3fe8}
+.dash .radios input[type=radio]:checked::before{transform:scale(1)}
+.dash .radios input[type=radio]:checked{box-shadow:0 0 8px rgba(139,63,232,.5)}
+/* inert state: greyed + no pointer until Run enables them */
+.dash .radios input[type=radio]:disabled{border-color:#cbd5e1;cursor:not-allowed;box-shadow:none}
+.dash .radios input[type=radio]:disabled::before{background:#cbd5e1}
+.dash .radios label:has(input:disabled){color:#94a3b8;cursor:not-allowed}
+
+/* ── big "thinking" dial overlay (two smooth counter-rotating arcs) ── */
+.helix-thinking{position:fixed;inset:0;z-index:9999;display:none;
+  align-items:center;justify-content:center;background:rgba(5,6,10,.72);backdrop-filter:blur(3px)}
+.helix-thinking.on{display:flex}
+.helix-dial{position:relative;width:210px;height:210px}
+.helix-dial svg{position:absolute;inset:0;width:100%;height:100%}
+.helix-dial .ring{fill:none}
+.helix-dial .gap-outer{stroke:#8b3fe8;stroke-width:6;stroke-linecap:round;
+  filter:drop-shadow(0 0 7px rgba(139,63,232,.85));
+  transform-origin:50% 50%;animation:spinCW 1.4s linear infinite}
+.helix-dial .gap-inner{stroke:#28e0d0;stroke-width:5;stroke-linecap:round;
+  filter:drop-shadow(0 0 6px rgba(40,224,208,.8));
+  transform-origin:50% 50%;animation:spinCCW 3.4s linear infinite}
+@keyframes spinCW{to{transform:rotate(360deg)}}
+@keyframes spinCCW{to{transform:rotate(-360deg)}}
+.helix-dial .core{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;font-family:"Orbitron",sans-serif}
+.helix-dial .pct{font-size:22px;font-weight:700;color:#28e0d0;text-shadow:0 0 12px rgba(40,224,208,.6);letter-spacing:.15em}
+.helix-dial .lbl{font-size:9px;letter-spacing:.34em;color:#8b3fe8;margin-top:6px}
+.helix-thinking .tnote{position:absolute;bottom:28%;font-family:"Share Tech Mono",monospace;
+  font-size:12px;color:#727a9c;letter-spacing:.1em}
+
+/* ── python files panel ── */
+.dash .pyrow{padding:11px 13px;margin-bottom:9px;border:1px solid rgba(15,23,42,.1);
+  border-left:3px solid #8b3fe8;border-radius:0 6px 6px 0;background:#fff}
+.dash .pyname{font-family:"Share Tech Mono",monospace;font-size:13px;font-weight:700;color:#0f172a;
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.dash .pymeta{font-size:10.5px;font-weight:400;color:#94a3b8;letter-spacing:.05em}
+.dash .pydesc{font-size:11.5px;line-height:1.55;color:#475569;margin-top:5px}
+
+/* ── vertical radios ── */
+.dash .radios.vert{flex-direction:column;align-items:flex-start;gap:9px}
+
+/* ── run banner + CHANGE VIEW viewbar ── */
+.dash .run-banner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.dash .run-expl{font-size:11.5px;line-height:1.5;color:#475569;max-width:520px}
+.dash .viewbar{position:relative;border:1px dashed rgba(139,63,232,.4);border-radius:8px;
+  padding:20px 16px 16px;background:rgba(139,63,232,.04)}
+.dash .viewbar-tag{position:absolute;top:-10px;left:14px;background:#8b3fe8;color:#fff;
+  font-family:"Orbitron",sans-serif;font-size:10px;font-weight:700;letter-spacing:.18em;
+  padding:3px 10px;border-radius:4px}
+.dash .viewbar .ctrl-config{display:flex;gap:34px;flex-wrap:wrap}
+
+/* ── guide button grid + shared alert box ── */
+.dash .guidegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+@media(max-width:680px){.dash .guidegrid{grid-template-columns:repeat(2,1fr)}}
+.dash .gbtn{font-family:"Share Tech Mono",monospace;font-size:12px;color:#334155;text-align:left;
+  padding:10px 12px;border:1px solid rgba(15,23,42,.14);border-radius:6px;background:#fff;cursor:pointer;
+  transition:all .12s}
+.dash .gbtn:hover{border-color:#8b3fe8;color:#8b3fe8;box-shadow:0 0 0 1px #8b3fe8 inset}
+.dash .gbtn.active{border-color:#8b3fe8;background:rgba(139,63,232,.1);color:#6d28b8;
+  box-shadow:0 0 0 1px #8b3fe8 inset}
+.dash .alertbox{border:1px solid rgba(139,63,232,.3);border-left:4px solid #8b3fe8;border-radius:0 8px 8px 0;
+  padding:13px 15px;background:rgba(139,63,232,.06)}
+.dash .alertbox .ab-title{font-family:"Orbitron",sans-serif;font-size:12px;font-weight:700;color:#6d28b8;
+  letter-spacing:.05em;margin-bottom:6px}
+.dash .alertbox .ab-body{font-size:12px;line-height:1.6;color:#475569}
+
+/* ── mass-point toggle tabs (agreement window) ── */
+.dash .masstabs{display:flex;gap:6px;margin:4px 0 14px;flex-wrap:wrap}
+.dash .masstabs .mtab{font-family:"Share Tech Mono",monospace;font-size:12px;font-weight:700;
+  padding:6px 14px;border:1px solid rgba(15,23,42,.16);border-radius:6px;background:#fff;color:#64748b;
+  cursor:pointer;transition:all .12s}
+.dash .masstabs .mtab:hover{border-color:#8b3fe8;color:#8b3fe8}
+.dash .masstabs .mtab.active{background:#8b3fe8;border-color:#8b3fe8;color:#fff;
+  box-shadow:0 0 10px rgba(139,63,232,.4)}
+
+
+/* ── takehome headline cards ── */
+.dash .thgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.dash .thgrid{grid-template-columns:1fr}}
+.dash .thcard{border:1px solid rgba(139,63,232,.25);border-radius:10px;padding:18px 20px;
+  background:linear-gradient(135deg,rgba(139,63,232,.06),rgba(40,224,208,.04))}
+.dash .threg{font-family:"Share Tech Mono",monospace;font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;color:#8b3fe8;font-weight:700}
+.dash .thbig{font-family:"Orbitron",sans-serif;font-size:52px;font-weight:700;color:#0f172a;line-height:1.05;margin:4px 0}
+.dash .thbig .thpct{font-size:26px;color:#8b3fe8;margin-left:2px}
+.dash .thlbl{font-size:12px;color:#64748b;margin-bottom:12px}
+.dash .thbreak{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.dash .thb{font-family:"Share Tech Mono",monospace;font-size:11px;padding:3px 9px;border-radius:4px;font-weight:700}
+.dash .thb.both{background:rgba(40,224,208,.16);color:#0d9488}
+.dash .thb.mo{background:rgba(139,63,232,.16);color:#6d28b8}
+.dash .thb.ao{background:rgba(245,158,11,.16);color:#b45309}
+.dash .thb.neither{background:rgba(100,116,139,.12);color:#475569}
+.dash .thnote{font-size:11.5px;line-height:1.5;color:#475569}
+
+/* ── category margin bars ── */
+.dash .catmeet{font-size:11.5px;color:#6d28b8;margin:6px 0 2px;font-weight:600}
+.dash .cmhead{display:grid;grid-template-columns:1.6fr .5fr 1.4fr .3fr;gap:8px;
+  font-size:10px;letter-spacing:.05em;color:#94a3b8;text-transform:uppercase;margin:8px 0 4px;padding-bottom:4px;border-bottom:1px solid rgba(15,23,42,.08)}
+.dash .crow{display:grid;grid-template-columns:1.6fr .5fr 1.4fr .3fr;gap:8px;align-items:center;padding:4px 0;font-size:12px}
+.dash .crow .cn{color:#334155} .dash .crow .cv{font-family:"Share Tech Mono",monospace;color:#0f172a;text-align:right}
+.dash .cmargin{padding:0 4px}
+.dash .cmtrack{position:relative;display:block;height:10px;background:rgba(15,23,42,.05);border-radius:5px}
+.dash .cmmid{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(15,23,42,.3)}
+.dash .cmfill{position:absolute;top:0;bottom:0;border-radius:5px}
+.dash .crow .cl{font-weight:700;text-align:center;font-size:11px}
+.dash .crow .cl.la{color:#0d9488} .dash .crow .cl.lb{color:#8b3fe8}

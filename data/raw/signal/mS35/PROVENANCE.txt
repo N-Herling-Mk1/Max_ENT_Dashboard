@@ -1,0 +1,28 @@
+PROVENANCE — SIGNAL MC (mS35)
+========================================
+Generated: 2026-06-18
+Role:       SIGNAL (Monte Carlo, Hidden Sector Scalar H->SS)
+
+SAMPLE
+  DSID:     537838  mH125_mS35_ct1310 (NTUP_20260113)
+  Campaign: mc23a,  mH = 125 GeV
+  Ntuple:   user.juwack.537838.mH125_mS35_ct1310.e8549_e8528_s4162_s4114_mc23a_251128_EXT0.DAOD_LLP1_251220__EXT0.NTUP_20260113
+  Source:   /data2/kjohns/run3_sample_ntuple_files/mc/HSS/<above>
+
+CUTFLOW
+  Repo:     ms-vtx-run-3-cutflow (week_9 checkout, score-patched)
+  Runner:   CutflowRunnerOneVertex (AnalysisBase 25.2.81)
+  Channel:  1VtxRoI  (signal region: HTmiss > 40 GeV ON, mindR_jetcut > 0.8)
+  Config:   config/cutflow1VtxRoI.yaml
+  Metadata: metadata/hssMetaData.txt (MC cross-section weighting)
+
+SNAPSHOT
+  After "vector pT sum", before NN1/NN2 cuts. Includes NN scores
+  (barrel: scoreNN1b/scoreNN2b ; endcap: scoreNN1e/scoreNN2e) = ABCD plane.
+
+FILES (this folder)
+  raw_nn1_barrel.csv   223 rows x 37 cols   scoreNN1b, scoreNN2b
+  raw_nn1_endcap.csv   446 rows x 37 cols   scoreNN1e, scoreNN2e
+  raw_nn2_barrel.csv   223 rows x 31 cols   scoreNN1b, scoreNN2b
+  raw_nn2_endcap.csv   446 rows x 31 cols   scoreNN1e, scoreNN2e
+  Join key: eventNumber

@@ -1,0 +1,39 @@
+PROVENANCE — VR BACKGROUND (real data)
+========================================
+Generated: 2026-06-18
+Role:       BACKGROUND (real ATLAS data, used as the background sample)
+
+SOURCE NTUPLES
+  /data2/kjohns/run3_sample_ntuple_files/data/data24/data24VR/data24periodAllYear
+  ATLAS Run 3 data24, Validation Region (VR). Real data (mcChannelNumber = 0).
+  VR is defined by HTmiss < 40 GeV, applied UPSTREAM at ntuple production
+  (events max out at ~39.9 GeV). 440 input files, 3,036,219 events.
+
+CUTFLOW
+  Repo:    ms-vtx-run-3-cutflow  (week_9 checkout, score-patched)
+  Path:    ~/0_sp_26/0_week_9/cutflow_run
+  Runner:  CutflowRunnerOneVertex  (AnalysisBase 25.2.81)
+  Channel: 1VtxRoIVR  (HTmiss cut disabled: m_selection_htmissMin = -1.0)
+  Config:  config/cutflowVR1VtxRoI.yaml
+  Run:     data24VR_scored_20260617-172754
+
+KEY MODIFICATION (why these differ from the March set)
+  Snapshot taken after "vector pT sum" (cut 12), BEFORE the NN1/NN2 cuts, so the
+  full preselected population (17,562) is retained rather than the 97 full-selection
+  survivors. CutflowRunnerOneVertex.cxx was patched so the four snapshot column
+  whitelists INCLUDE the NN discriminant scores:
+      barrel lanes: scoreNN1b, scoreNN2b
+      endcap lanes: scoreNN1e, scoreNN2e
+  These scores ARE the ABCD plane. (March files: 35/29 cols, no scores.)
+
+FILES (this folder)
+  raw_nn1_barrel.csv   524   rows x 37 cols   scoreNN1b, scoreNN2b
+  raw_nn1_endcap.csv   17038 rows x 37 cols   scoreNN1e, scoreNN2e
+  raw_nn2_barrel.csv   524   rows x 31 cols   scoreNN1b, scoreNN2b
+  raw_nn2_endcap.csv   17038 rows x 31 cols   scoreNN1e, scoreNN2e
+  Region split: barrel 524 + endcap 17,038 = 17,562. Join key: eventNumber.
+
+CUTFLOW STAGE COUNTS
+  vector pT sum: 17562   <- snapshot here (population retained)
+  NN1:           11843
+  NN2:              97   <- full-selection survivors (too few for ABCD; not used)

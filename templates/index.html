@@ -3,15 +3,25 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>//HELIX · MaxEnt · ABCD · Information Theory</title>
-<link rel="icon" href="/favicon.ico?v=11">
+<link rel="icon" href="/favicon.ico?v=15">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/helix.css?v=11">
+<link rel="stylesheet" href="/static/css/helix.css?v=16">
+<style>
+.hx-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);z-index:200}
+.hx-modal.open{display:flex}
+.hx-modal-box{background:#05060a;border:1px solid var(--purple);border-radius:10px;padding:22px 26px;max-width:430px;box-shadow:0 0 40px rgba(139,63,232,.4)}
+.hx-modal-h{font-family:var(--disp);font-size:14px;letter-spacing:.1em;color:var(--purple);margin-bottom:10px}
+.hx-modal-b{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.hx-modal-x{font-family:var(--disp);font-size:12px;letter-spacing:.1em;color:var(--cyan);background:#000;border:1px solid var(--cyan);border-radius:6px;padding:9px 18px;cursor:pointer}
+.hx-modal-x:hover{box-shadow:0 0 12px rgba(40,224,208,.4)}
+</style>
 </head>
 <body>
 <div class="shell">
   <header class="topheader">
+    <div class="xhatch-bg" aria-hidden="true"></div>
     <div class="brand">
-      <div class="logo-frame"><img src="/static/img/max_ent_logo.png?v=11" alt="MaxEnt"></div>
+      <div class="logo-frame"><img src="/static/img/max_ent_logo.png?v=15" alt="MaxEnt"></div>
       <div class="title">
         <div class="t">//HELIX</div>
         <div class="s">MAXENT · ABCD · INFORMATION THEORY &mdash; DASHBOARD</div>
@@ -26,9 +36,9 @@
       <button class="iconbtn" id="btn-help" title="help / Q&amp;A" aria-label="help">?</button>
       <div class="popover" id="settings-pop">
         <h4>SETTINGS</h4>
-        <div class="row">data &middot; <span style="color:var(--cyan)">data/sample_signal.csv</span></div>
-        <div class="row">data &middot; <span style="color:var(--cyan)">data/sample_background.csv</span></div>
-        <div class="row" style="margin-top:8px;color:var(--faint)">replace the CSVs in <code>data/</code> with ng02 exports; edit <code>static/data/*.json</code> for references / glossary / Q&amp;A.</div>
+        <div class="row">background &middot; <span style="color:var(--cyan)">data/merged/background.csv</span></div>
+        <div class="row">signal &middot; <span style="color:var(--cyan)">data/merged/signal_mS{5,16,35,55}.csv</span></div>
+        <div class="row" style="margin-top:8px;color:var(--faint)">real scored data (data24 VR background + HSS signal). edit <code>static/data/*.json</code> for references / glossary / Q&amp;A.</div>
       </div>
     </div>
   </header>
@@ -36,13 +46,22 @@
     <aside class="sidebar">
       <nav class="nav" id="nav">
         <button data-src="/main" class="active">DASHBOARD</button>
+        <button data-src="/theory">THEORY</button>
         <button data-src="/data">DATA</button>
         <button data-src="/references">REFERENCES</button>
         <button data-src="/glossary">GLOSSARY</button>
+        <button data-src="/pyfiles">PYTHON</button>
         <button data-src="/qa">Q&amp;A</button>
       </nav>
     </aside>
     <iframe id="view" class="frame" src="/main" title="view"></iframe>
+  </div>
+</div>
+<div class="hx-modal" id="hx-modal" role="dialog" aria-modal="true">
+  <div class="hx-modal-box">
+    <div class="hx-modal-h" id="hx-modal-title">NOTICE</div>
+    <div class="hx-modal-b" id="hx-modal-body"></div>
+    <button class="hx-modal-x" id="hx-modal-close">OK</button>
   </div>
 </div>
 <script>
@@ -52,11 +71,16 @@
     const b = e.target.closest('button'); if(!b) return;
     setActive(b.dataset.src); view.src = b.dataset.src;
   });
-  document.getElementById('btn-reload').onclick = ()=>{ try{view.contentWindow.location.reload();}catch(_){const s=view.src;view.src=s;} };
+  function helixModal(title, body){
+    document.getElementById('hx-modal-title').textContent = title;
+    document.getElementById('hx-modal-body').textContent = body;
+    document.getElementById('hx-modal').classList.add('open');
+  }
+  document.getElementById('hx-modal-close').onclick = ()=> document.getElementById('hx-modal').classList.remove('open');
+  document.getElementById('hx-modal').addEventListener('click', e=>{ if(e.target.id==='hx-modal') e.currentTarget.classList.remove('open'); });
+  document.getElementById('btn-reload').onclick = ()=> helixModal('REFRESH — DISABLED', 'View refresh is disconnected in this build.');
   document.getElementById('btn-help').onclick = ()=>{ setActive('/qa'); view.src='/qa'; };
-  const pop = document.getElementById('settings-pop');
-  document.getElementById('btn-settings').onclick = e=>{ e.stopPropagation(); pop.classList.toggle('open'); };
-  document.addEventListener('click', e=>{ if(!e.target.closest('.actions')) pop.classList.remove('open'); });
+  document.getElementById('btn-settings').onclick = ()=> helixModal('SETTINGS — DISABLED', 'Settings are disconnected in this build.');
 </script>
 </body>
 </html>

@@ -1,0 +1,53 @@
+<!-- ════════════════════════════════════════════════════════════════
+     PANEL: theory — ABCD as a special case of MaxEnt
+     Paste into templates/main.html  (see REWORK_NOTES.md for the exact
+     insertion point: between #sec-guide and #sec-takehome). Uses the
+     existing helix.css classes (.panel .ph .dot .psub .muted) + vars
+     --cyan / --purple / --faint already defined in helix.css.
+     ════════════════════════════════════════════════════════════════ -->
+<div class="panel" id="sec-theory">
+  <div class="ph"><span class="dot"></span><h2>theory &mdash; ABCD as a special case of MaxEnt</h2></div>
+  <div class="psub">The hypothesis that frames every panel below: <b>ABCD is MaxEnt with marginal constraints only</b>. Keep the measured NN1&ndash;NN2 dependence and you generalize it.</div>
+
+  <div class="theory-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:14px 0;">
+    <div class="theory-card" style="border:1px solid rgba(255,138,60,.4);border-top:2px solid #ff8a3c;border-radius:4px;padding:12px 14px;background:rgba(255,138,60,.05);">
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:#ff8a3c;letter-spacing:.04em;margin-bottom:6px;">ABCD METHOD</div>
+      <div class="muted" style="font-size:12px;line-height:1.6;">Two discriminants cut the plane into four regions; A is the signal region. If they are independent for background, the counts factorize and A is predicted from the three control regions.</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:13px;text-align:center;margin:9px 0 4px;color:var(--cyan);">N&#8336; = N&#7517; &middot; N&#7580; / N&#7589;</div>
+      <div class="muted" style="font-size:11px;">rests entirely on NN1 &perp; NN2 in background.</div>
+    </div>
+    <div class="theory-card" style="border:1px solid rgba(127,119,221,.45);border-top:2px solid var(--purple);border-radius:4px;padding:12px 14px;background:rgba(127,119,221,.06);">
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--purple);letter-spacing:.04em;margin-bottom:6px;">MAXENT PRINCIPLE</div>
+      <div class="muted" style="font-size:12px;line-height:1.6;">Among all distributions consistent with the measured constraints, take the one of maximum entropy &mdash; the least-committal fit (Jaynes 1957; uniqueness, Shore&ndash;Johnson 1980). Marginals only &rArr; p(x)p(y).</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:13px;text-align:center;margin:9px 0 4px;color:var(--cyan);">max H(p)  s.t. &lang;constraints&rang;</div>
+      <div class="muted" style="font-size:11px;">add a correlation constraint &rArr; coupled joint.</div>
+    </div>
+  </div>
+
+  <div class="theory-rel" style="border:1px solid var(--faint,#2a3550);border-radius:4px;padding:12px;margin:14px 0;">
+    <div class="muted" style="font-size:11px;margin-bottom:8px;letter-spacing:.04em;">SAME MACHINE &middot; DIFFERENT CONSTRAINT SET</div>
+    <svg viewBox="0 0 660 150" width="100%" style="max-width:660px;display:block;margin:0 auto;font-family:'Share Tech Mono',monospace;">
+      <rect x="6" y="6" width="648" height="104" rx="8" fill="rgba(127,119,221,.07)" stroke="var(--purple)" stroke-width="1.3"/>
+      <text x="22" y="28" fill="var(--purple)" font-size="12" font-family="Orbitron,sans-serif">MAXENT &mdash; all joints consistent with the constraints</text>
+      <text x="22" y="45" fill="#8aa0c8" font-size="10.5">marginals + measured dependence &middot; coupled joint p(x,y)</text>
+      <rect x="22" y="56" width="300" height="44" rx="6" fill="rgba(255,138,60,.10)" stroke="#ff8a3c" stroke-width="1.2"/>
+      <text x="36" y="76" fill="#ff8a3c" font-size="12" font-family="Orbitron,sans-serif">ABCD</text>
+      <text x="36" y="92" fill="#d9a070" font-size="10.5">marginals only &middot; &rho;=0 &middot; p(x)p(y)</text>
+      <path d="M332 70 L452 70" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#tar)"/>
+      <text x="346" y="64" fill="#a9a2e6" font-size="10">+ correlation</text>
+      <path d="M452 92 L332 92" stroke="#ff8a3c" stroke-width="1.5" marker-end="url(#tar2)"/>
+      <text x="470" y="74" fill="#8aa0c8" font-size="10">&rho;&rarr;0 reduces to ABCD</text>
+      <text x="22" y="134" fill="var(--cyan)" font-size="11.5">ABCD &sub; MaxEnt &mdash; the independence-limit special case, not a rival method.</text>
+      <defs>
+        <marker id="tar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="var(--purple)"/></marker>
+        <marker id="tar2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#ff8a3c"/></marker>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="theory-hyp" style="border:1px solid var(--cyan);border-left:3px solid var(--cyan);border-radius:4px;padding:12px 14px;background:rgba(0,229,255,.05);">
+    <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);letter-spacing:.04em;margin-bottom:5px;">&#9656; MAIN HYPOTHESIS</div>
+    <div style="font-size:13px;line-height:1.65;">MaxEnt is a valid background-estimation method that <b>generalizes ABCD</b>: it predicts N&#8336; from the control regions under marginal constraints <i>plus</i> the measured NN1&ndash;NN2 dependence &mdash; equal to ABCD when the scores are independent, and more accurate when they are not.</div>
+    <div class="muted" style="font-size:11px;margin-top:8px;">test &mdash; observed N&#8336; vs both predictions across regions &times; cut modes; MaxEnt should track observed at least as well, strictly better where dependence is nonzero.</div>
+  </div>
+</div>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>python files</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/helix.css?v=15">
+<link rel="stylesheet" href="/static/css/dashlight.css?v=15">
+</head>
+<body>
+<div class="wrap dash">
+  <div class="dash-main" style="margin:0 auto">
+    <div class="panel" id="sec-pyfiles">
+      <div class="ph"><span class="dot"></span><h2>python files &mdash; what runs this dashboard</h2></div>
+      <div class="psub">Every Python file in the project, what it does, and how big it is. The engine does the math, the Flask app serves it, the build script prepares the data.</div>
+      <div id="pyfiles"><div class="empty">loading…</div></div>
+    </div>
+  </div>
+</div>
+<script>
+(async function(){
+  try{
+    const d = await (await fetch("/api/pyfiles")).json();
+    const rows = (d.files||[]).map(f=>`<div class="pyrow">
+      <div class="pyname">${f.path}<span class="pymeta">${f.lines} lines · ${f.size_kb} KB</span></div>
+      <div class="pydesc">${f.desc}</div></div>`).join("");
+    document.getElementById("pyfiles").innerHTML = rows || `<div class="empty">no files</div>`;
+  }catch(e){ document.getElementById("pyfiles").innerHTML = `<div class="empty">${e}</div>`; }
+})();
+</script>
+</body>
+</html>

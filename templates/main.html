@@ -4,114 +4,51 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/helix.css?v=11">
-<link rel="stylesheet" href="/static/css/dashlight.css?v=11">
+<link rel="stylesheet" href="/static/css/helix.css?v=17">
+<style>
+.dash2{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+@media(max-width:900px){.dash2{grid-template-columns:1fr}}
+.control-col{display:flex;flex-direction:column;gap:14px;position:sticky;top:16px}
+.results-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.btn-ghost{font-family:var(--disp);font-size:11px;letter-spacing:.06em;color:var(--cyan);background:#000;
+  border:1px solid var(--line2);border-radius:6px;padding:8px 12px;cursor:pointer;transition:.15s}
+.btn-ghost:hover{border-color:var(--cyan);box-shadow:0 0 10px rgba(40,224,208,.3)}
+.results .empty{padding:48px 16px;text-align:center;color:var(--muted)}
+/* mode segmented toggle */
+.modeseg{display:inline-flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden;margin-bottom:10px;width:100%}
+.modeseg .mseg{flex:1;background:transparent;color:var(--muted);border:0;padding:7px 10px;font-family:var(--disp);font-size:11px;letter-spacing:.05em;cursor:pointer;transition:.15s}
+.modeseg .mseg.on{background:var(--cyan);color:#001014}
+/* faux terminal */
+.term{background:#04060a;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.term-head{font-family:var(--disp);font-size:11px;letter-spacing:.08em;color:var(--purple);padding:9px 13px;border-bottom:1px solid var(--line2);background:#080b12}
+.term-head .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-right:8px;vertical-align:1px}
+.term-body{font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.7;color:#cfeefe;padding:13px;min-height:150px;max-height:260px;overflow:auto}
+.term-body .tl{white-space:pre-wrap}
+.tcyan{color:var(--cyan)} .tgrn{color:#5dca7a} .tmut{color:#5b6b86}
+.cursor{display:inline-block;width:8px;height:13px;background:var(--cyan);margin-left:3px;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+</style>
 </head>
 <body>
-<div class="wrap dash">
-  <div class="dash-main">
-
-    <div class="stepper">
-      <a class="step active" data-jump="sec-category"><span class="snum">1</span> category test</a>
-      <span class="sarrow">&rarr;</span>
-      <a class="step" data-jump="sec-abcd"><span class="snum">2</span> ABCD vs MaxEnt</a>
-      <span class="sarrow">&rarr;</span>
-      <a class="step" data-jump="sec-agreement"><span class="snum">3</span> agreement</a>
-    </div>
-
-    <div class="panel guide" id="sec-guide">
-      <div class="ph"><span class="dot"></span><h2>start here &mdash; how to read this</h2></div>
-      <ol class="guide-steps">
-        <li><b>Run the category test first.</b> It classifies each region &mdash;
-          <span class="pa">Case A</span> (bulk-driven, ABCD trustworthy) or
-          <span class="pb">Case B</span> (tail-driven, ABCD breaks). The whole readout hinges on which region is which.</li>
-        <li><b>ABCD vs MaxEnt.</b> Two background estimates, side by side per region. In Case A they should agree; in Case B watch MaxEnt and ABCD diverge.</li>
-        <li><b>Agreement matrix.</b> The per-event crosstab. The off-diagonal jumpers &mdash; especially the borderline ones sitting near &tau; &mdash; are the events worth chasing.</li>
-      </ol>
-    </div>
-
-    <div class="panel" id="sec-control">
-      <div class="ph"><span class="dot"></span><h2>control</h2>
-        <span class="status" id="status" style="margin-left:auto">idle &middot; runs barrel + endcap side by side</span></div>
-      <div class="ctrl">
-        <div class="ctrl-config">
-          <div class="field"><label>signal</label>
-            <select id="sigsrc"><option value="mS35">mS35 (only point)</option></select></div>
-          <div class="field"><label>agreement on</label>
-            <select id="agsample"><option value="signal">signal</option><option value="background">background</option></select></div>
-        </div>
-        <div class="ctrl-run">
-          <button class="btn-primary" id="run-cat">&#9312; RUN CATEGORY TEST</button>
-          <button class="btn-primary" id="run" disabled title="run the category test first">&#9313; RUN FULL ANALYSIS</button>
-        </div>
-      </div>
-      <div class="ctrl-outputs">
-        <span class="out-label">jump</span>
-        <button class="chip" data-jump="sec-category">&#10230; category</button>
-        <button class="chip" data-jump="sec-abcd">&#10230; ABCD vs MaxEnt</button>
-        <button class="chip" data-jump="sec-agreement">&#10230; agreement</button>
-        <button class="chip" data-jump="sec-ladder">&#10230; ladder</button>
-        <button class="chip" data-jump="sec-it">&#10230; info theory</button>
-        <button class="chip" data-jump="sec-jumpers">&#10230; jumpers</button>
-      </div>
-    </div>
-
-    <div class="panel" id="sec-category">
-      <div class="ph"><span class="dot"></span><h2>&#9312; category test &mdash; Case A / Case B</h2></div>
-      <div class="muted" style="font-size:11px;margin-bottom:12px">
-        each region by the support&rarr;law diagnostics:
-        <b style="color:var(--cyan)">Case A</b> bulk-driven &middot; ABCD-compatible (Gaussian) &nbsp;vs&nbsp;
-        <b style="color:var(--purple)">Case B</b> tail-driven &middot; ABCD-incompatible (Poisson).
-      </div>
-      <div id="category"><div class="empty">run the category test (step 1)</div></div>
-    </div>
-
-    <div class="panel" id="sec-abcd">
-      <div class="ph"><span class="dot"></span><h2>&#9313; ABCD vs MaxEnt &mdash; per region</h2></div>
-      <div id="abcd"><div class="empty">run full analysis (step 2)</div></div>
-    </div>
-
-    <div class="panel" id="sec-agreement">
-      <div class="ph"><span class="dot"></span><h2>&#9314; method agreement &mdash; ABCD &times; MaxEnt</h2></div>
-      <div id="matrix"><div class="empty">run full analysis</div></div>
-    </div>
-
-    <div class="panel" id="sec-ladder">
-      <div class="ph"><span class="dot"></span><h2>dependence ladder</h2></div>
-      <div id="ladder"><div class="empty">run full analysis</div></div>
-      <div class="muted" style="font-size:11px;margin-top:8px">
-        linear r &sub; dCor &sub; closure (2-bin MI) &sub; I (full MI, &sigma; vs permutation null)
-      </div>
-    </div>
-
-    <div class="panel" id="sec-it">
-      <div class="ph"><span class="dot"></span><h2>information theory &mdash; entropy</h2></div>
-      <div id="entropy"><div class="empty">run full analysis</div></div>
-      <div class="muted" style="font-size:11px;margin-top:8px">
-        I = H(X) + H(Y) &minus; H(X,Y), per class, per region.
-      </div>
-    </div>
-
-    <div class="panel" id="sec-jumpers">
-      <div class="ph"><span class="dot"></span><h2>boundary jumpers &mdash; what crosses</h2></div>
-      <div id="jumpers"><div class="empty">run full analysis</div></div>
-    </div>
-
-
+<div class="wrap">
+  <div class="dash2">
+    <main class="results-col">
+      <div id="terminal-mount"></div>
+      <div id="results-mount" class="results"></div>
+    </main>
+    <aside class="control-col">
+      <div id="run-mount" class="panel"></div>
+      <div id="abcd-mount" class="panel"></div>
+      <div id="maxent-mount" class="panel"></div>
+    </aside>
   </div>
-
-  <aside class="toc">
-    <div class="toc-h">ON THIS PAGE</div>
-    <a data-target="sec-guide" class="active">start here</a>
-    <a data-target="sec-control">control</a>
-    <a data-target="sec-category">&#9312; category test</a>
-    <a data-target="sec-abcd">&#9313; ABCD vs MaxEnt</a>
-    <a data-target="sec-agreement">&#9314; agreement</a>
-    <a data-target="sec-ladder">dependence ladder</a>
-    <a data-target="sec-it">information theory</a>
-    <a data-target="sec-jumpers">boundary jumpers</a>
-  </aside>
 </div>
-<script src="/static/js/main.js?v=11"></script>
+<script src="/static/js/run.js?v=3"></script>
+<script src="/static/js/abcd_panel.js?v=3"></script>
+<script src="/static/js/maxent_panel.js?v=2"></script>
+<script src="/static/js/terminal.js?v=1"></script>
+<script src="/static/js/sweep_panel.js?v=1"></script>
+<script src="/static/js/results.js?v=5"></script>
+<script src="/static/js/dashboard.js?v=4"></script>
 </body>
 </html>

@@ -24,6 +24,13 @@ SIG_C, BG_C = "#1D9E75", "#D85A30"     # plots only; chrome is themed in CSS
 
 
 # ───────────────────────────── io ──────────────────────────────────
+def _to_float(x):
+    try:
+        return float(x)
+    except (ValueError, TypeError):
+        return np.nan
+
+
 def load_csv(path, region=None, region_col="region"):
     rows = {}
     with open(path, newline="") as f:
@@ -38,12 +45,41 @@ def load_csv(path, region=None, region_col="region"):
                 rows[c].append(r[c])
     out = {}
     for c, v in rows.items():
-        try:
-            out[c] = np.asarray([float(x) for x in v])
-        except ValueError:
-            out[c] = np.asarray(v)           # non-numeric (e.g. region tag)
+        arr = np.array([_to_float(x) for x in v], dtype=float)
+        # genuine string column (e.g. region tag) -> keep strings; else numeric (NaN-filled)
+        if np.isnan(arr).all() and any(x not in ("", "nan", "NaN", "NULL") for x in v):
+            out[c] = np.asarray(v)
+        else:
+            out[c] = arr
     n = len(next(iter(out.values()))) if out else 0
     return out, n
+
+
+def present(d, feats):
+    """Features actually available (numeric + finite) in this region's slice."""
+    keep = []
+    for c in feats:
+        v = d.get(c)
+        if v is not None and getattr(v, "dtype", None) is not None \
+                and v.dtype.kind == "f" and np.isfinite(v).any():
+            keep.append(c)
+    return keep
+
+
+def resolve_axes(cfg, region):
+    """Per-region NN-score plane axes: barrel=(NN1b,NN2b), endcap=(NN1e,NN2e)."""
+    ax = cfg.get("axes", {}).get(region)
+    if ax:
+        return ax
+    return cfg["xcol"], cfg["ycol"]
+
+
+def resolve_cuts(cfg, bg, region, xcol, ycol):
+    """Absolute NN thresholds, or quantile of background per axis."""
+    if cfg.get("cut_mode", "absolute") == "quantile":
+        qx, qy = cfg.get("quantile", (0.5, 0.5))
+        return float(np.nanquantile(bg[xcol], qx)), float(np.nanquantile(bg[ycol], qy))
+    return cfg["cuts"].get(region, (0.5, 0.5))
 
 
 # ──────────────────────── dependence ladder ────────────────────────
@@ -208,17 +244,17 @@ def _plane(ax, x, y, cut_x, cut_y, title):
     ax.set_xlabel("NN1"); ax.set_ylabel("NN2")
 
 
-def make_plots(sig, bg, xcol, ycol, cut_x, cut_y, outdir, tag):
+def make_plots(sig, bg, xcol, ycol, cut_x, cut_y, outdir, tag, prefix=""):
     paths = {}
     # planes
     fig, ax = plt.subplots(figsize=(5.0, 4.2)); fig.patch.set_facecolor("white")
     _plane(ax, sig[xcol], sig[ycol], cut_x, cut_y, "signal plane")
-    p = os.path.join(outdir, f"{tag}_signal_plane.png"); fig.tight_layout()
+    p = os.path.join(outdir, f"{prefix}{tag}_signal_plane.png"); fig.tight_layout()
     fig.savefig(p, dpi=120, facecolor="white"); plt.close(fig); paths["signal_plane"] = p
 
     fig, ax = plt.subplots(figsize=(5.0, 4.2)); fig.patch.set_facecolor("white")
     _plane(ax, bg[xcol], bg[ycol], cut_x, cut_y, "background plane")
-    p = os.path.join(outdir, f"{tag}_background_plane.png"); fig.tight_layout()
+    p = os.path.join(outdir, f"{prefix}{tag}_background_plane.png"); fig.tight_layout()
     fig.savefig(p, dpi=120, facecolor="white"); plt.close(fig); paths["background_plane"] = p
 
     # pmi field (signal): log[ p(x,y) / pX pY ]
@@ -234,7 +270,7 @@ def make_plots(sig, bg, xcol, ycol, cut_x, cut_y, outdir, tag):
     fig.colorbar(im, ax=ax, label="pmi (nats)")
     ax.set_title("pmi field — where I lives (signal)", fontsize=11, fontweight="bold")
     ax.set_xlabel("NN1"); ax.set_ylabel("NN2")
-    p = os.path.join(outdir, f"{tag}_pmi_field.png"); fig.tight_layout()
+    p = os.path.join(outdir, f"{prefix}{tag}_pmi_field.png"); fig.tight_layout()
     fig.savefig(p, dpi=120, facecolor="white"); plt.close(fig); paths["pmi_field"] = p
     return paths
 
@@ -300,16 +336,28 @@ def classify_region(closure, dcor, mi, S_bg, maxent):
         dict(name="Poisson(count) feature share", value=round(pois_share, 2), thresh=0.40,
              leans="B" if pois_share > 0.40 else "A"),
     ]
+    # per-criterion margin: how far the value sits from its A/B threshold, as a
+    # signed fraction of the threshold. positive = on the A side (meeting it),
+    # negative = on the B side (failing it). |margin| says HOW strongly.
+    for sgn in signals:
+        t = sgn["thresh"] if sgn["thresh"] else 1.0
+        m = (t - sgn["value"]) / abs(t)        # value < thresh -> positive -> leans A
+        sgn["margin"] = round(float(max(min(m, 1.5), -1.5)), 3)
     b = sum(1 for s in signals if s["leans"] == "B")
+    # overall "how much do we meet Case A": share of criteria on the A side,
+    # weighted by how strongly (mean of clamped positive margins).
+    a_share = round(100.0 * sum(1 for sg in signals if sg["leans"] == "A") / len(signals), 0)
+    strength = round(float(np.mean([sg["margin"] for sg in signals])), 3)
     case = "B" if (dev > 0.50 or b >= 3) else "A"          # closure is decisive when large
     return dict(case=case, b_signals=b, n_signals=len(signals), signals=signals,
-                label=("tail-driven · ABCD-incompatible" if case == "B"
-                       else "bulk-driven · ABCD-compatible"),
+                a_criteria_pct=a_share, mean_margin=strength,
+                label=("tail-dependent regime · MaxEnt-favored" if case == "B"
+                       else "bulk-driven regime · ABCD sufficient"),
                 dominant_law=("Poisson (counts, tail)" if case == "B"
                               else "Gaussian (continuous, bulk)"))
 
 
-def abcd_plot(d, xcol, ycol, cut_x, cut_y, closure, outdir, tag, which):
+def abcd_plot(d, xcol, ycol, cut_x, cut_y, closure, outdir, tag, which, prefix=""):
     fig, ax = plt.subplots(figsize=(5.0, 4.4)); fig.patch.set_facecolor("white")
     ax.set_facecolor("white")
     lim_x = np.quantile(d[xcol], [0.001, 0.999]); lim_y = np.quantile(d[ycol], [0.001, 0.999])
@@ -326,11 +374,11 @@ def abcd_plot(d, xcol, ycol, cut_x, cut_y, closure, outdir, tag, which):
                  if np.isfinite(rr) else f"ABCD plane — {which}",
                  fontsize=10.5, fontweight="bold")
     ax.set_xlabel("NN1"); ax.set_ylabel("NN2")
-    p = os.path.join(outdir, f"{tag}_abcd_{which}.png"); fig.tight_layout()
+    p = os.path.join(outdir, f"{prefix}{tag}_abcd_{which}.png"); fig.tight_layout()
     fig.savefig(p, dpi=120, facecolor="white"); plt.close(fig); return p
 
 
-def detector_hist_plot(marg_sig, marg_bg, pmi_sig, pmi_bg, outdir, tag):
+def detector_hist_plot(marg_sig, marg_bg, pmi_sig, pmi_bg, outdir, tag, prefix=""):
     fig, ax = plt.subplots(1, 2, figsize=(9.2, 3.9)); fig.patch.set_facecolor("white")
     for a in ax: a.set_facecolor("white")
     b1 = np.histogram_bin_edges(np.concatenate([marg_bg, marg_sig]), bins=40)
@@ -343,11 +391,11 @@ def detector_hist_plot(marg_sig, marg_bg, pmi_sig, pmi_bg, outdir, tag):
     ax[1].hist(pmi_sig, bins=b2, density=True, alpha=.55, color="#5ec962", label="signal")
     ax[1].set_title("joint detector  pmi  (separates)", fontsize=10.5, fontweight="bold")
     ax[1].set_xlabel("pointwise MI (nats)"); ax[1].legend(fontsize=8)
-    p = os.path.join(outdir, f"{tag}_detectors.png"); fig.tight_layout()
+    p = os.path.join(outdir, f"{prefix}{tag}_detectors.png"); fig.tight_layout()
     fig.savefig(p, dpi=120, facecolor="white"); plt.close(fig); return p
 
 
-def compare_plot(verdicts, outdir):
+def compare_plot(verdicts, outdir, prefix=""):
     regions = list(verdicts.keys())
     metrics = ["closure dev", "dCor", "MI σ (÷10)", "tail idx"]
     def vals(v):
@@ -363,59 +411,91 @@ def compare_plot(verdicts, outdir):
     ax.set_xticks(xpos); ax.set_xticklabels(metrics, fontsize=9); ax.axhline(0, color="#ccc", lw=.8)
     ax.set_title("ABCD diagnostics vs category verdict — barrel vs endcap",
                  fontsize=10.5, fontweight="bold"); ax.legend(fontsize=9)
-    p = os.path.join(outdir, "compare_regions.png"); fig.tight_layout()
+    p = os.path.join(outdir, f"{prefix}compare_regions.png"); fig.tight_layout()
     fig.savefig(p, dpi=120, facecolor="white"); plt.close(fig); return p
 
 
-def categorize(signal_csv, background_csv, outdir="static/out", **kw):
+def categorize(signal_csv, background_csv, outdir="static/out", prefix="", **kw):
     """Run both regions on the background, classify each Case A/B, compare."""
     cfg = {**DEFAULTS, **kw}; os.makedirs(outdir, exist_ok=True)
-    xcol, ycol = cfg["xcol"], cfg["ycol"]; verdicts = {}
+    verdicts = {}
     for region in ("barrel", "endcap"):
-        cut_x, cut_y = cfg["cuts"].get(region, (0.5, 0.5))
+        xcol, ycol = resolve_axes(cfg, region)
         try:
             bg, n_bg = load_csv(background_csv, region)
         except Exception:
             continue
         if n_bg == 0:
             continue
+        # keep rows with finite plane axes
+        m = np.isfinite(bg[xcol]) & np.isfinite(bg[ycol])
+        bg = {k: (v[m] if hasattr(v, "__len__") and len(v) == len(m) else v) for k, v in bg.items()}
+        n_bg = int(m.sum())
+        if n_bg == 0:
+            continue
+        cut_x, cut_y = resolve_cuts(cfg, bg, region, xcol, ycol)
         dcor = distance_correlation(bg[xcol], bg[ycol])
         mi = mi_permutation_null(bg[xcol], bg[ycol], cfg["n_bins"], cfg["n_perm"])
         clo = abcd_closure(bg[xcol], bg[ycol], cut_x, cut_y)
-        model = fit_maxent(bg, cfg["count_features"], cfg["cont_features"])
+        model = fit_maxent(bg, present(bg, cfg["count_features"]), present(bg, cfg["cont_features"]))
         S_bg, _ = surprise(bg, model)
         maxent = {"features": {"poisson": list(model["count"]), "gaussian": list(model["cont"])}}
         cls = classify_region(clo, dcor, mi, S_bg, maxent)
         verdicts[region] = dict(region=region, n=n_bg, closure=clo,
                                 dcor=round(float(dcor), 3), mi=mi, classify=cls)
-    plot = compare_plot(verdicts, outdir) if len(verdicts) == 2 else None
+    plot = compare_plot(verdicts, outdir, prefix=prefix) if len(verdicts) == 2 else None
     return dict(verdicts=verdicts, generated=time.strftime("%Y-%m-%d %H:%M:%S"),
                 plot=(os.path.relpath(plot, "static").replace(os.sep, "/") if plot else None))
 
 
 # ─────────────────────────── driver ────────────────────────────────
 DEFAULTS = dict(
-    xcol="scoreNN1b", ycol="scoreNN2b",
-    count_features=["nMDT", "nRPC", "nTGC", "nBOL"],
-    cont_features=["clusE", "rms_clustime", "mindR", "isolation", "MET_dphi"],
+    # Per-region ABCD plane axes (real NN discriminant scores).
+    xcol="scoreNN1b", ycol="scoreNN2b",                 # fallback (barrel)
+    axes={"barrel": ("scoreNN1b", "scoreNN2b"),
+          "endcap": ("scoreNN1e", "scoreNN2e")},
+    # Real feature names; both regions' variants listed, present() filters per region.
+    count_features=["msvtx_nRPC_s", "msvtx_nTGC_s",
+                    "muSeg_nBIL", "muSeg_nBML", "muSeg_nBOL",
+                    "muSeg_nEIL", "muSeg_nEML", "muSeg_nEOL",
+                    "msegUnAssoc_nBIL", "msegUnAssoc_nBML", "msegUnAssoc_nBOL",
+                    "msegUnAssoc_nEIL", "msegUnAssoc_nEML", "msegUnAssoc_nEOL"],
+    cont_features=["MS1Vtx_clusE_raw", "MS1Vtx_rms_clusE_raw", "MS1Vtx_maxclusE_raw",
+                   "MS1Vtx_mindR_jetcut_raw", "MS1Vtx_sumTrackPt0p2Cone_raw",
+                   "htmiss_NOSYS", "met_met_NOSYS", "MSVtx_MET_dphi_raw",
+                   "MS1Vtx_avg_clustime_raw", "MS1Vtx_rms_clustime_raw",
+                   "MS1Vtx_maxclustime_raw", "MS1Vtx_nTracklet_raw",
+                   "MS1Vtx_barrel_hits_ntot_raw", "MS1Vtx_endcap_hits_ntot_raw"],
+    # Cuts: absolute = real NN thresholds; quantile = percentile of background.
+    cut_mode="absolute",
     cuts={"barrel": (0.5, 0.5), "endcap": (0.8, 0.8)},
+    quantile=(0.5, 0.5),
     n_bins=24, tau_pct=95.0, n_perm=200,
 )
 
 
 def analyze(signal_csv, background_csv, region="barrel", outdir="static/out",
-            agreement_sample="signal", **kw):
+            agreement_sample="signal", prefix="", **kw):
     cfg = {**DEFAULTS, **kw}
     os.makedirs(outdir, exist_ok=True)
     t0 = time.time()
-    xcol, ycol = cfg["xcol"], cfg["ycol"]
-    cut_x, cut_y = cfg["cuts"].get(region, (0.5, 0.5))
-    feats = cfg["count_features"] + cfg["cont_features"]
+    xcol, ycol = resolve_axes(cfg, region)
 
     sig, n_sig = load_csv(signal_csv, region)
     bg, n_bg = load_csv(background_csv, region)
     if n_sig == 0 or n_bg == 0:
         raise ValueError(f"empty sample for region={region}: n_sig={n_sig} n_bg={n_bg}")
+    # keep rows with finite plane axes
+    def _finite(d):
+        m = np.isfinite(d[xcol]) & np.isfinite(d[ycol])
+        return {k: (v[m] if hasattr(v, "__len__") and len(v) == len(m) else v) for k, v in d.items()}, int(m.sum())
+    sig, n_sig = _finite(sig)
+    bg, n_bg = _finite(bg)
+    if n_sig == 0 or n_bg == 0:
+        raise ValueError(f"no finite-axis rows for region={region}: n_sig={n_sig} n_bg={n_bg}")
+    cut_x, cut_y = resolve_cuts(cfg, bg, region, xcol, ycol)
+    cfeat = present(bg, cfg["count_features"]); kfeat = present(bg, cfg["cont_features"])
+    feats = cfeat + kfeat
 
     def ladder(d):
         r = pearson_r(d[xcol], d[ycol])
@@ -432,7 +512,7 @@ def analyze(signal_csv, background_csv, region="barrel", outdir="static/out",
                       "background": entropy_metrics(bg[xcol], bg[ycol], cfg["n_bins"])}
 
     # MaxEnt: fit reference on background, score both
-    model = fit_maxent(bg, cfg["count_features"], cfg["cont_features"])
+    model = fit_maxent(bg, cfeat, kfeat)
     S_bg, _ = surprise(bg, model)
     S_sig, contrib = surprise(sig, model)
     tau = float(np.percentile(S_bg, cfg["tau_pct"]))
@@ -469,10 +549,10 @@ def analyze(signal_csv, background_csv, region="barrel", outdir="static/out",
                         "borderline": {"abcd_only": borderline(agr["masks"]["abcd_only"]),
                                        "maxent_only": borderline(agr["masks"]["maxent_only"])}}
 
-    paths = make_plots(sig, bg, xcol, ycol, cut_x, cut_y, outdir, region)
-    paths["abcd_background"] = abcd_plot(bg, xcol, ycol, cut_x, cut_y, bgl["closure"], outdir, region, "background")
-    paths["abcd_signal"] = abcd_plot(sig, xcol, ycol, cut_x, cut_y, res["ladder"]["signal"]["closure"], outdir, region, "signal")
-    paths["detectors"] = detector_hist_plot(marg_sig, marg_bg, pmi_sig, pmi_bg, outdir, region)
+    paths = make_plots(sig, bg, xcol, ycol, cut_x, cut_y, outdir, region, prefix=prefix)
+    paths["abcd_background"] = abcd_plot(bg, xcol, ycol, cut_x, cut_y, bgl["closure"], outdir, region, "background", prefix=prefix)
+    paths["abcd_signal"] = abcd_plot(sig, xcol, ycol, cut_x, cut_y, res["ladder"]["signal"]["closure"], outdir, region, "signal", prefix=prefix)
+    paths["detectors"] = detector_hist_plot(marg_sig, marg_bg, pmi_sig, pmi_bg, outdir, region, prefix=prefix)
     res["plots"] = {k: os.path.relpath(v, "static").replace(os.sep, "/")
                     for k, v in paths.items()}
     res["meta"] = {"n_signal": n_sig, "n_background": n_bg,
