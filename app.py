@@ -304,6 +304,25 @@ def api_run():
     cfg = hxconfig.load()
     full = helix_stats.run_full(DATA["background"], cfg=hxconfig.engine_cfg())
     CACHE["full"] = full
+    # optional: TRUE numerical max-ent (raw Pearson constraint), separate module
+    if cfg.get("maxent_numeric"):
+        from core import maxent_solver as msolver
+        for region in REGIONS:
+            key = region + ":absolute"
+            if key not in full:
+                continue
+            xcol, ycol = helix_mi.resolve_axes(helix_mi.DEFAULTS, region)
+            bg, _ = helix_mi.load_csv(DATA["background"], region)
+            mm = np.isfinite(bg[xcol]) & np.isfinite(bg[ycol])
+            xv = np.clip(bg[xcol][mm], 0, 1); yv = np.clip(bg[ycol][mm], 0, 1)
+            cx, cy = cfg["cuts"][region]
+            try:
+                num = msolver.predict_na(xv, yv, float(cx), float(cy))
+                full[key]["predictor"].update(
+                    na_maxent_num=num["na_maxent_num"], na_maxent_num_err=num["na_maxent_num_err"],
+                    rho_pearson=num["rho_pearson"], theta=num["theta"])
+            except Exception as exc:
+                full[key]["predictor"]["maxent_num_error"] = str(exc)
     maxent = {}
     for region in REGIONS:
         xcol, ycol = helix_mi.resolve_axes(helix_mi.DEFAULTS, region)

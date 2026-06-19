@@ -9,5 +9,6 @@
       0.8
     ]
   },
-  "tau_pct": 95.0
+  "tau_pct": 95.0,
+  "maxent_numeric": false
 }

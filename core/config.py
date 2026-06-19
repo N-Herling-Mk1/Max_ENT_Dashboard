@@ -12,11 +12,12 @@ CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.j
 DEFAULTS = {
     "cuts": {"barrel": [0.7, 0.7], "endcap": [0.8, 0.8]},
     "tau_pct": 95.0,
+    "maxent_numeric": False,
 }
 
 
 def load():
-    cfg = {"cuts": dict(DEFAULTS["cuts"]), "tau_pct": DEFAULTS["tau_pct"]}
+    cfg = {"cuts": dict(DEFAULTS["cuts"]), "tau_pct": DEFAULTS["tau_pct"], "maxent_numeric": DEFAULTS["maxent_numeric"]}
     if os.path.exists(CONFIG_PATH):
         try:
             d = json.load(open(CONFIG_PATH))
@@ -25,6 +26,8 @@ def load():
                     cfg["cuts"][r] = [float(v[0]), float(v[1])]
             if "tau_pct" in d:
                 cfg["tau_pct"] = float(d["tau_pct"])
+            if "maxent_numeric" in d:
+                cfg["maxent_numeric"] = bool(d["maxent_numeric"])
         except Exception:
             pass
     return cfg
@@ -43,6 +46,8 @@ def update(patch):
                 cfg["cuts"][r] = [float(v[0]), float(v[1])]
     if "tau_pct" in patch:
         cfg["tau_pct"] = max(50.0, min(99.9, float(patch["tau_pct"])))
+    if "maxent_numeric" in patch:
+        cfg["maxent_numeric"] = bool(patch["maxent_numeric"])
     return save(cfg)
 
 

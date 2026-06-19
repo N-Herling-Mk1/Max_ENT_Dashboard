@@ -17,7 +17,16 @@ window.MaxEntPanel = (function () {
       '<div class="muted" style="font-size:10px;margin-top:4px">surprise quantile that defines the MaxEnt anomaly threshold &tau;.</div>' +
       '<button id="tau-apply" class="btn-ghost" style="margin-top:10px;width:100%">save &tau;</button>' +
       '<div id="tau-msg" class="muted" style="font-size:10px;margin-top:6px;text-align:center"></div>' +
+      '<label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-top:12px;border-top:1px solid var(--line2);padding-top:12px;cursor:pointer">' +
+      '<input type="checkbox" id="me-num"' + (cfg.maxent_numeric ? ' checked' : '') + '> exact numerical max-ent <span style="color:var(--purple)">(raw ρ)</span></label>' +
+      '<div class="muted" style="font-size:10px;margin-top:3px">true exp-family fit, raw Pearson constraint (adds ~1s). Adds a predictor bar in single mode.</div>' +
       '<div id="tau-display" class="muted" style="font-size:11px;margin-top:10px;border-top:1px solid var(--line2);padding-top:8px;line-height:1.7">τ values appear after RUN</div>';
+
+    const numbox = el.querySelector('#me-num');
+    numbox.onchange = async () => {
+      try { await fetch('/api/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ maxent_numeric: numbox.checked }) }); }
+      catch (e) {}
+    };
 
     const slider = el.querySelector('#tau-pct'), out = el.querySelector('#tau-pct-out');
     slider.oninput = () => { out.textContent = (+slider.value).toFixed(1); };

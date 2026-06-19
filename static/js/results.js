@@ -44,12 +44,16 @@ window.Results = (function () {
   }
   function predSheet(full, reg) {
     const F = full[FK(reg)]; if (!F) return sheet('<div style="text-align:center;color:#999">—</div>');
-    const p = F.predictor, mx = (Math.max(p.na_observed, p.na_abcd, p.na_maxent, p.na_indep_check) * 1.15) || 1;
+    const p = F.predictor;
+    const hasNum = (p.na_maxent_num !== undefined && p.na_maxent_num !== null);
+    const mx = (Math.max(p.na_observed, p.na_abcd, p.na_maxent, p.na_indep_check, hasNum ? p.na_maxent_num : 0) * 1.15) || 1;
     return sheet('<div style="font-size:11px;letter-spacing:.12em;color:' + RC[reg] + ';font-family:Orbitron,sans-serif;margin-bottom:4px">' + reg.toUpperCase() + '</div>' +
       bar('observed N_A', p.na_observed, Math.sqrt(p.na_observed), '#444', mx, false) +
       bar('ABCD (B·C/D)', p.na_abcd, p.na_abcd_err, '#ba7517', mx, false) +
       bar('MaxEnt ρ=0', p.na_indep_check, 0, '#9aa3b8', mx, false) +
-      bar('MaxEnt ρ̂=' + num(p.rho_ctrl, 2), p.na_maxent, p.na_maxent_err, '#534ab7', mx, false));
+      bar('MaxEnt copula ρ̂=' + num(p.rho_ctrl, 2), p.na_maxent, p.na_maxent_err, '#534ab7', mx, false) +
+      (hasNum ? bar('MaxEnt num ρ=' + num(p.rho_pearson, 2), p.na_maxent_num, p.na_maxent_num_err, '#0f8c74', mx, false) : '') +
+      (hasNum ? '<div style="font-size:10px;color:#787890;margin-top:4px">copula fixes rank ρ · numeric fixes raw Pearson ρ (θ=' + num(p.theta, 2) + ')</div>' : ''));
   }
   function compatSheet(full, reg) {
     const F = full[FK(reg)]; if (!F) return sheet('<div style="text-align:center;color:#999">—</div>');
