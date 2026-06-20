@@ -317,6 +317,186 @@ def _xlog2(p):
         return np.where(p > 0, -p * np.log2(p), 0.0)
 
 
+# ════════════════════════════════════════════════════════════════════
+#  Section II reconstruction (ABCDisCo PRD 103.035021, §II) on HELIX
+#  data/signal. Decomposes the ABCD prediction error into the two
+#  ORTHOGONAL requirements the paper isolates, with our real counts:
+#    REQ-1  independence/closure   — bg cell odds ratio OR_bg (Eq 2.3-2.5)
+#           exact identity: kappa_need = N_A,obs / N_A,pred = OR_bg.
+#           Threshold-independent necessary condition: debiased MI = 0.
+#           >> this is the ONLY axis MaxEnt/copula touches <<
+#    REQ-2  normalized contamination r = δ_A⁻¹(δ_B+δ_C−δ_D)  (Eq 2.8-2.9)
+#           per signal mass; |r|≪1 required. r is METHOD-INVARIANT
+#           (same plane, same signal) → identical for ABCD and MaxEnt.
+#    Eq 2.10 bias expansion: N_A,pred = N_A,b·(1+δ_A·r); the signal
+#           excess surviving ABCD's own background prediction is ∝ (1−r).
+# ════════════════════════════════════════════════════════════════════
+def sec2_reconstruction(background_csv, signal_paths, region, cut, bins=16):
+    """signal_paths: {mass_label: csv_path}. cut: (cx, cy). Returns a JSON-
+    ready dict mirroring ABCDisCo §II, all numbers from the real samples."""
+    cx, cy = float(cut[0]), float(cut[1])
+    xcol, ycol = H.resolve_axes(H.DEFAULTS, region)
+
+    def load_xy(path):
+        d, _ = H.load_csv(path, region)
+        m = np.isfinite(d[xcol]) & np.isfinite(d[ycol])
+        return np.clip(d[xcol][m], 0, 1), np.clip(d[ycol][m], 0, 1)
+
+    def cells(x, y):
+        hx, hy = x > cx, y > cy
+        return (int(np.sum(hx & hy)), int(np.sum(hx & ~hy)),
+                int(np.sum(~hx & hy)), int(np.sum(~hx & ~hy)))
+
+    xb, yb = load_xy(background_csv)
+    A, B, Cc, D = cells(xb, yb)
+
+    # REQ-1 : closure / independence
+    clo = closure_ci(xb, yb, cx, cy)
+    OR_bg = (A * D) / (B * Cc) if (B * Cc) > 0 else float("nan")   # == kappa_need
+    mi = mi_debiased(xb, yb, bins)
+
+    # REQ-2 : normalized signal contamination, per mass (Eq 2.8)
+    masses = []
+    for label, path in signal_paths.items():
+        try:
+            xs, ys = load_xy(path)
+        except Exception as exc:
+            masses.append(dict(mass=label, error=str(exc)))
+            continue
+        sA, sB, sC, sD = cells(xs, ys)
+
+        def dlt(ns, nb):
+            return (ns / nb) if nb > 0 else float("nan")
+        dA, dB, dC, dD = dlt(sA, A), dlt(sB, B), dlt(sC, Cc), dlt(sD, D)
+        r = (dB + dC - dD) / dA if (dA and np.isfinite(dA)) else float("nan")
+        # Eq 2.10 readouts: bg over-prediction factor and surviving-excess frac
+        bias_factor = (1.0 + dA * r) if np.isfinite(r) else float("nan")   # N_A,pred/N_A,b
+        surviving = (1.0 - r) if np.isfinite(r) else float("nan")          # ∝ apparent/true excess
+        naive_ok = bool(np.isfinite(max(dB, dC)) and max(dB, dC) < 0.10)   # δ_i≪1 (Eq 2.7)
+        norm_ok = bool(np.isfinite(r) and abs(r) < 0.10)                   # |r|≪1 (Eq 2.9)
+        masses.append(dict(
+            mass=label, cells=dict(A=sA, B=sB, C=sC, D=sD),
+            dA=_f(dA), dB=_f(dB), dC=_f(dC), dD=_f(dD), r=_f(r),
+            bias_factor=_f(bias_factor), surviving=_f(surviving),
+            naive_ok=naive_ok, norm_ok=norm_ok,
+            absorbed_pct=_f(100 * r) if np.isfinite(r) else None))
+
+    return dict(
+        region=region, cut=[_f(cx), _f(cy)], N_bg=int(len(xb)),
+        axes=dict(x=xcol, y=ycol),
+        bg=dict(A=A, B=B, C=Cc, D=D,
+                abcd_pred=clo["pred"], abcd_pred_err=clo["pred_err"],
+                dev_sigma=clo["dev_sigma"],
+                OR_bg=_f(OR_bg), kappa_need=_f(OR_bg)),   # identity, surfaced twice on purpose
+        mi=dict(I_plugin=mi["I_plugin"], I_debiased=mi["I_debiased"],
+                sigma=mi["sigma"], mean_abs_pmi=mi["mean_abs_pmi"]),
+        masses=masses,
+        # published reference point (ABCDisCo Fig 2 worked example) for the p-value card
+        ref=dict(dA_pct=10, NA=1000, p_true=0.0015, p_4pct=0.03, p_6pct=0.10))
+
+
+def sec2_card(background_csv, signal_csv, region, cut, bins=16, prior="equal"):
+    """Single-cut readout for the Section II dashboard card. Every number
+    reproduced live at the configured operating cut (cx, cy):
+
+      match      Cohen-κ agreement of ABCD-flag vs PMI-MaxEnt-flag (raw %),
+                 with κ, label, chance, and the 2×2 crosstab cells.
+      N_A        observed background events in region A.
+      shared U   I(NN1-flag ; NN2-flag) on background — the inter-axis
+                 dependence ABCD throws away (in millibits + % of min flag H).
+      co-info    I(X;L)+I(Y;L)−I(X,Y;L) at this cell (>0 redundant axes,
+                 <0 synergistic), bits — same definition as sweep_label.
+      I(X,Y;L)   joint A/B/C/D signal separation at this cell, bits.
+      I(X;L),I(Y;L)  per-axis separations at this cut, bits.
+    """
+    cx, cy = float(cut[0]), float(cut[1])
+    xcol, ycol = H.resolve_axes(H.DEFAULTS, region)
+
+    def xy(path):
+        d, _ = H.load_csv(path, region)
+        m = np.isfinite(d[xcol]) & np.isfinite(d[ycol])
+        return np.clip(d[xcol][m], 0, 1), np.clip(d[ycol][m], 0, 1)
+
+    xb, yb = xy(background_csv)
+    Nb = len(xb)
+    Xb = xb > cx
+    Yb = yb > cy
+    A = int(np.sum(Xb & Yb)); B = int(np.sum(Xb & ~Yb))
+    Cc = int(np.sum(~Xb & Yb)); D = int(np.sum(~Xb & ~Yb))
+
+    # ── agreement crosstab: ABCD-flag vs PMI-MaxEnt-flag (same as run_full) ──
+    abcd_flag = Xb & Yb
+    jm = pmi_jumpers(xb, yb, bins)
+    _, pmi = H.detector_eval({"x": xb, "y": yb},
+                             H.build_joint({"x": xb, "y": yb}, "x", "y", bins),
+                             "x", "y")
+    maxent_flag = jm["masks"]["jumper"] & (pmi > 0)
+    agr = kappa_agreement(abcd_flag, maxent_flag)
+
+    # ── shared U : inter-axis MI of the two binary flags on background ──
+    def _bern_H(p):
+        return _bent(float(p))
+    pX, pY = float(Xb.mean()), float(Yb.mean())
+    pXY = float((Xb & Yb).mean())
+    # I(X;Y) for two Bernoullis from the 2×2 flag table (bits)
+    cellsf = [(pXY, pX, pY), ((pX - pXY), pX, 1 - pY),
+              ((pY - pXY), 1 - pX, pY), ((1 - pX - pY + pXY), 1 - pX, 1 - pY)]
+    Uxy = 0.0
+    for joint, mx, my in cellsf:
+        if joint > 0 and mx > 0 and my > 0:
+            Uxy += joint * np.log2(joint / (mx * my))
+    Uxy = max(float(Uxy), 0.0)
+    Hmin = min(_bern_H(pX), _bern_H(pY))
+    U_frac = (Uxy / Hmin) if Hmin > 1e-9 else float("nan")
+
+    # ── label-aware info at this single cell (sweep_label definitions) ──
+    info = dict(coinfo=None, sep=None, ixl=None, iyl=None, n_sig=None)
+    try:
+        xs, ys = xy(signal_csv)
+        Ns = len(xs)
+        if Ns and Nb:
+            ws, wb = (0.5, 0.5) if prior == "equal" else (Ns / (Ns + Nb), Nb / (Ns + Nb))
+            Xs = xs > cx; Ys = ys > cy
+
+            def quad(X, Y, N):
+                a = np.mean(X & Y); b = np.mean(X & ~Y)
+                c = np.mean(~X & Y); d = np.mean(~X & ~Y)
+                return a, b, c, d
+            sa, sb, sc, sd = quad(Xs, Ys, Ns)
+            ba, bb, bc, bd = quad(Xb, Yb, Nb)
+
+            def xl(p):  # -p log2 p
+                return 0.0 if p <= 0 else -p * np.log2(p)
+            Hs = xl(sa) + xl(sb) + xl(sc) + xl(sd)
+            Hb = xl(ba) + xl(bb) + xl(bc) + xl(bd)
+            Hm = (xl(ws * sa + wb * ba) + xl(ws * sb + wb * bb)
+                  + xl(ws * sc + wb * bc) + xl(ws * sd + wb * bd))
+            sep = max(Hm - ws * Hs - wb * Hb, 0.0)
+
+            def axis_mi(ps, pb):
+                Hsb = xl(ps) + xl(1 - ps)
+                Hbb = xl(pb) + xl(1 - pb)
+                mm = ws * ps + wb * pb
+                Hmb = xl(mm) + xl(1 - mm)
+                return max(Hmb - ws * Hsb - wb * Hbb, 0.0)
+            ixl = axis_mi(float(Xs.mean()), float(Xb.mean()))
+            iyl = axis_mi(float(Ys.mean()), float(Yb.mean()))
+            info = dict(coinfo=_f(ixl + iyl - sep), sep=_f(sep),
+                        ixl=_f(ixl), iyl=_f(iyl), n_sig=int(Ns))
+    except Exception:
+        pass
+
+    return dict(
+        region=region, cut=[_f(cx), _f(cy)], N_bg=int(Nb),
+        axes=dict(x=xcol, y=ycol),
+        match=dict(raw=agr["raw"], kappa=agr["kappa"], label=agr["label"],
+                   chance=agr["chance"]),
+        cells=dict(A=A, B=B, C=Cc, D=D),
+        agreement=agr["cells"],
+        shared_U=dict(bits=_f(Uxy), mbits=_f(1000.0 * Uxy), frac_pct=_f(100.0 * U_frac)),
+        label_info=info)
+
+
 def sweep_label(background_csv, signal_csv, grid_n=25, cfg=None, prior="equal"):
     """Label-aware sweep over the (cut_x, cut_y) grid.
 

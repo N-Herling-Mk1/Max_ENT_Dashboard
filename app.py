@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 from core import helix_mi
 from core import helix_stats
+from core import sec2_figs
 from core import config as hxconfig
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -131,6 +132,10 @@ def page_pyfiles():
 @app.route("/theory")
 def page_theory():
     return render_template("theory.html")
+
+@app.route("/sec2")
+def page_sec2():
+    return render_template("sec2.html")
 
 @app.route("/topology")
 def page_topology():
@@ -298,6 +303,130 @@ def api_config():
         patch = request.get_json(silent=True) or {}
         return jsonify(data=hxconfig.update(patch))
     return jsonify(data=hxconfig.load())
+
+
+@app.route("/api/sec2")
+def api_sec2():
+    """ABCDisCo §II reconstruction on HELIX data/signal at the live config cut.
+    ?region=endcap|barrel (default endcap). Returns the two-requirement
+    decomposition: bg odds-ratio/closure + debiased MI (req-1), and per-mass
+    normalized contamination r (req-2)."""
+    region = request.args.get("region", "endcap")
+    if region not in REGIONS:
+        return jsonify(error=f"unknown region '{region}'"), 400
+    cfg = hxconfig.load()
+    cut = cfg["cuts"].get(region, [0.8, 0.8])
+    sig = {m: DATA["signal"][m] for m in SIGNAL_POINTS
+           if os.path.exists(DATA["signal"].get(m, ""))}
+    try:
+        data = helix_stats.sec2_reconstruction(DATA["background"], sig, region, cut)
+        return jsonify(data=data, regions=REGIONS)
+    except Exception as e:
+        return jsonify(error=str(e)), 200
+
+
+def _region_cut(region):
+    cfg = hxconfig.load()
+    return cfg["cuts"].get(region, [0.8, 0.8])
+
+
+@app.route("/api/sec2_plane")
+def api_sec2_plane():
+    """Run-2 Fig 10 analogue: binned NN1×NN2 background plane + cut + cells."""
+    region = request.args.get("region", "endcap")
+    if region not in REGIONS:
+        return jsonify(error=f"unknown region '{region}'"), 400
+    bins = max(8, min(40, int(request.args.get("bins", 20))))
+    overlay = request.args.get("signal")  # optional mS.. scatter overlay
+    sample = DATA["signal"].get(overlay) if overlay else None
+    try:
+        d = sec2_figs.plane_histogram(DATA["background"], region,
+                                      _region_cut(region), bins=bins, sample=sample)
+        return jsonify(data=d)
+    except Exception as e:
+        return jsonify(error=str(e)), 200
+
+
+@app.route("/api/sec2_splane")
+def api_sec2_splane():
+    """Run-2 Fig 8b analogue: signal-MC NN1×NN2 plane (normalised units)."""
+    region = request.args.get("region", "endcap")
+    if region not in REGIONS:
+        return jsonify(error=f"unknown region '{region}'"), 400
+    bins = max(8, min(40, int(request.args.get("bins", 20))))
+    mass = request.args.get("signal", "mS35")
+    sig = DATA["signal"].get(mass)
+    if not sig or not os.path.exists(sig):
+        return jsonify(error=f"no signal sample '{mass}'"), 200
+    try:
+        d = sec2_figs.signal_plane(sig, region, _region_cut(region), bins=bins)
+        return jsonify(data=d)
+    except Exception as e:
+        return jsonify(error=str(e)), 200
+
+
+@app.route("/api/sec2_card")
+def api_sec2_card():
+    """Single-cut dashboard card: match%/κ, N_A, agreement 2×2, shared U,
+    co-info, I(X,Y;L), per-axis I(·;L). All live at the configured cut."""
+    region = request.args.get("region", "endcap")
+    if region not in REGIONS:
+        return jsonify(error=f"unknown region '{region}'"), 400
+    mass = request.args.get("signal", "mS35")
+    sig = DATA["signal"].get(mass) or DATA["signal"].get("mS35")
+    try:
+        d = helix_stats.sec2_card(DATA["background"], sig, region, _region_cut(region))
+        return jsonify(data=d)
+    except Exception as e:
+        return jsonify(error=str(e)), 200
+
+
+@app.route("/api/sec2_pvalue")
+def api_sec2_pvalue():
+    """ABCDisCo Fig 2 (faithful two-panel): p vs δ_A [N_A×r family] and
+    p vs N_A [r×σ_syst family]. ?dA sets the right-panel fixed δ_A."""
+    try:
+        dA = float(request.args.get("dA", 0.10))
+        d = sec2_figs.pvalue_fig2(dA_right=dA)
+        return jsonify(data=d)
+    except Exception as e:
+        return jsonify(error=str(e)), 200
+
+
+@app.route("/api/sec2_rejr")
+def api_sec2_rejr():
+    """ABCDisCo Figs 5/7/8/12: background-rejection vs normalized r scatter."""
+    region = request.args.get("region", "endcap")
+    if region not in REGIONS:
+        return jsonify(error=f"unknown region '{region}'"), 400
+    mass = request.args.get("signal", "mS35")
+    sig = DATA["signal"].get(mass)
+    if not sig or not os.path.exists(sig):
+        return jsonify(error=f"no signal sample '{mass}'"), 200
+    try:
+        d = sec2_figs.rejection_vs_r(DATA["background"], sig, region,
+                                     _region_cut(region))
+        return jsonify(data=d)
+    except Exception as e:
+        return jsonify(error=str(e)), 200
+
+
+@app.route("/api/sec2_inject")
+def api_sec2_inject():
+    """Signal-injection curve: N_A obs vs ABCD pred vs injected N_S."""
+    region = request.args.get("region", "endcap")
+    if region not in REGIONS:
+        return jsonify(error=f"unknown region '{region}'"), 400
+    mass = request.args.get("signal", "mS35")
+    sig = DATA["signal"].get(mass)
+    if not sig or not os.path.exists(sig):
+        return jsonify(error=f"no signal sample '{mass}'"), 200
+    try:
+        d = sec2_figs.injection_curve(DATA["background"], sig, region,
+                                      _region_cut(region))
+        return jsonify(data=d)
+    except Exception as e:
+        return jsonify(error=str(e)), 200
 
 
 @app.route("/api/run", methods=["POST"])

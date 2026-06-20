@@ -1,0 +1,265 @@
+<!-- Section II — ABCDisCo PRD 103.035021 §II reconstructed on HELIX data/signal.
+     Live: fetches /api/sec2?region=… at the configured cut. White cards,
+     accent borders (teal/orange/purple), hand-rolled math to match THEORY. -->
+<style>
+.sec2{--teal:#0f8c74;--orange:#c2691a;--purple:#5b51c9;--red:#c2384e;--green:#1f9d57;color:#26262f}
+.sec2 h1.s2-title{font-family:'Orbitron',sans-serif;font-size:17px;letter-spacing:.05em;color:#16a394;margin:4px 0 4px}
+.sec2 .sub{font-family:'Share Tech Mono',monospace;font-size:11.5px;color:#7a7a88;margin:0 0 12px}
+.sec2 .card{background:#fff;border:1px solid #e4e4ec;border-radius:10px;padding:16px 18px;margin:14px 0;box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.sec2 .card.teal{border-top:3px solid var(--teal)}
+.sec2 .card.orange{border-top:3px solid var(--orange)}
+.sec2 .card.purple{border-top:3px solid var(--purple)}
+.sec2 .hd{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:.05em;margin-bottom:8px}
+.sec2 .hd.teal{color:var(--teal)}.sec2 .hd.orange{color:var(--orange)}.sec2 .hd.purple{color:var(--purple)}
+.sec2 .eqtag{float:right;font-family:'Share Tech Mono',monospace;font-size:10.5px;color:#9a9aa8;letter-spacing:.04em}
+.sec2 p{font-size:13px;line-height:1.62;color:#3a3a45;margin:6px 0}
+.sec2 .k-teal{color:var(--teal);font-weight:700}.sec2 .k-orange{color:var(--orange);font-weight:700}.sec2 .k-purple{color:var(--purple);font-weight:700}
+.sec2 ol{margin:8px 0 4px;padding-left:20px}.sec2 ol li{font-size:13px;line-height:1.6;color:#3a3a45;margin:6px 0}
+.sec2 .note{font-size:11.5px;color:#7a7a88;margin-top:8px}
+.sec2 .mvar{font-family:Georgia,'Times New Roman',serif;font-style:italic}
+.sec2 .eq{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:5px;
+  font-family:Georgia,'Times New Roman',serif;font-size:16px;color:#15151c;
+  background:#f6f7fb;border:1px solid #e4e4ec;border-radius:8px;padding:10px 12px;margin:10px 0}
+.sec2 .frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 3px;font-size:.92em}
+.sec2 .frac .num{border-bottom:1.6px solid #2a2a33;padding:0 7px 1px}
+.sec2 .frac .den{padding:1px 7px 0}
+.sec2 sub{font-size:.7em}.sec2 sup{font-size:.7em}.sec2 .op{color:#6a6a78}
+/* controls */
+.sec2 .ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 2px}
+.sec2 .seg{display:inline-flex;border:1px solid #d4d4de;border-radius:7px;overflow:hidden}
+.sec2 .seg button{font-family:'Share Tech Mono',monospace;font-size:12px;padding:5px 14px;border:0;background:#fff;color:#55555f;cursor:pointer}
+.sec2 .seg button.on{background:#16a394;color:#fff}
+.sec2 .cutpill{font-family:'Share Tech Mono',monospace;font-size:11.5px;color:#55555f;background:#f2f2f7;border:1px solid #e4e4ec;border-radius:20px;padding:4px 12px}
+/* value pills */
+.sec2 .vrow{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.sec2 .vpill{flex:1 1 130px;background:#f8f9fc;border:1px solid #e8e8f0;border-radius:8px;padding:8px 11px}
+.sec2 .vpill .lab{font-family:'Share Tech Mono',monospace;font-size:10px;color:#8a8a96;letter-spacing:.04em;text-transform:uppercase}
+.sec2 .vpill .val{font-family:Georgia,serif;font-size:19px;color:#15151c;margin-top:2px}
+.sec2 .vpill .val small{font-size:12px;color:#8a8a96;font-family:'Share Tech Mono',monospace}
+.sec2 .vpill.hi{background:#eef7f4;border-color:#bfe3d8}
+/* 2x2 cell grid */
+.sec2 .abcd{display:grid;grid-template-columns:42px 1fr 1fr;grid-auto-rows:auto;gap:3px;max-width:300px;margin:8px 0;font-family:'Share Tech Mono',monospace;font-size:12px}
+.sec2 .abcd .ax{display:flex;align-items:center;justify-content:center;color:#9a9aa8;font-size:10px}
+.sec2 .abcd .cell{border:1px solid #e4e4ec;border-radius:6px;padding:8px 6px;text-align:center;background:#fafbfd}
+.sec2 .abcd .cell .nm{font-size:10px;letter-spacing:.04em}
+.sec2 .abcd .cell .ct{font-family:Georgia,serif;font-size:17px;color:#15151c}
+.sec2 .abcd .cell.A{background:#fdf3ea;border-color:#eccdb0}.sec2 .abcd .cell.A .nm{color:var(--orange)}
+/* table */
+.sec2 table{width:100%;border-collapse:collapse;margin:8px 0;font-family:'Share Tech Mono',monospace;font-size:12px}
+.sec2 th{text-align:right;padding:6px 9px;color:#6a6a78;border-bottom:1.5px solid #d8d8e2;font-weight:400;letter-spacing:.03em}
+.sec2 th:first-child{text-align:left}
+.sec2 td{text-align:right;padding:6px 9px;border-bottom:1px solid #eee;color:#2a2a33}
+.sec2 td:first-child{text-align:left;color:#15151c}
+.sec2 td.r{font-family:Georgia,serif;font-size:15px}
+.sec2 .verdict{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;letter-spacing:.03em}
+.sec2 .verdict.bad{background:#fbe9ec;color:var(--red);border:1px solid #f0c2cc}
+.sec2 .verdict.ok{background:#e7f6ee;color:var(--green);border:1px solid #bfe6cf}
+/* absorbed bar */
+.sec2 .bar{position:relative;height:16px;background:#eef0f5;border-radius:4px;overflow:hidden;min-width:90px}
+.sec2 .bar > i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#e8b24a,#c2691a);display:block}
+.sec2 .bar > i.over{background:linear-gradient(90deg,#d36b7e,#c2384e)}
+.sec2 .loading{font-family:'Share Tech Mono',monospace;font-size:12px;color:#9a9aa8;padding:20px 0}
+.sec2 .err{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--red)}
+</style>
+
+<div class="sec2">
+  <h1 class="s2-title">&#9656; Section II &mdash; reconstructing the ABCD error decomposition on HELIX data</h1>
+  <div class="sub">after Kasieczka, Nachman, Schwartz &amp; Shih, <i>PRD</i> <b>103</b>, 035021 (2021) &middot; numbers computed live from data24 VR background + HSS signal at the configured cut</div>
+
+  <!-- controls -->
+  <div class="card">
+    <div class="ctl">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:11.5px;color:#6a6a78">REGION</span>
+      <span class="seg" id="s2-region">
+        <button data-r="endcap" class="on">ENDCAP</button>
+        <button data-r="barrel">BARREL</button>
+      </span>
+      <span class="cutpill" id="s2-cut">cut &middot; &mdash;</span>
+      <span class="cutpill" id="s2-axes">axes &middot; &mdash;</span>
+      <span class="cutpill" id="s2-nbg">N&#8203;<sub>bg</sub> &middot; &mdash;</span>
+    </div>
+  </div>
+
+  <div id="s2-degen" class="card orange" style="display:none">
+    <div class="hd orange">&#9888; degenerate cut &mdash; signal region empty in background</div>
+    <p id="s2-degen-body" style="margin:2px 0 0"></p>
+  </div>
+
+  <!-- THE REFRAME -->
+  <div class="card teal">
+    <div class="hd teal">&#9656; the ABCD prediction error splits into two orthogonal requirements</div>
+    <p>The paper's §II shows the ABCD bias is the product of <b>two independent failure modes</b>. Reconstructing them on our data is the foundation of the method comparison &mdash; because <b>only the first is something MaxEnt can touch.</b></p>
+    <div class="vrow">
+      <div class="vpill"><div class="lab">requirement 1 &middot; independence</div><div class="val" style="font-size:14px;color:var(--purple)">background cell odds ratio = 1</div></div>
+      <div class="vpill"><div class="lab">requirement 2 &middot; contamination</div><div class="val" style="font-size:14px;color:var(--orange)">normalized r &#8810; 1</div></div>
+    </div>
+    <p class="note"><b>Req 1</b> is a statement about <b>background</b> on the plane &mdash; the closure/independence axis, the <span class="k-purple">only</span> axis the MaxEnt copula corrects. <b>Req 2</b> is a statement about <b>signal</b> leaking into the controls &mdash; it is <b>method-invariant</b> (same plane, same signal &rArr; identical r for ABCD and MaxEnt). Keeping them separate is what makes the comparison honest.</p>
+  </div>
+
+  <!-- CELL TABLE Eq 2.1-2.2 -->
+  <div class="card">
+    <div class="hd" style="color:#5b51c9">the four regions <span class="eqtag">Eq 2.1&ndash;2.2</span></div>
+    <p>Thresholds <span class="op">(</span><span class="mvar">c</span><sub>x</sub>,<span class="mvar">c</span><sub>y</sub><span class="op">)</span> split the NN1&ndash;NN2 plane; background counts in the three controls predict <span class="mvar">N</span><sub>A</sub>.</p>
+    <div id="s2-abcd"></div>
+    <div class="eq"><span class="mvar">N</span><sub>A</sub><sup>pred</sup> <span class="op">=</span> <span class="frac"><span class="num"><span class="mvar">N</span><sub>B</sub> <span class="op">&middot;</span> <span class="mvar">N</span><sub>C</sub></span><span class="den"><span class="mvar">N</span><sub>D</sub></span></span> <span class="op">=</span> <span id="s2-pred" class="k-orange">&mdash;</span> &nbsp;<span class="op">vs</span>&nbsp; observed <span class="mvar">N</span><sub>A</sub> <span class="op">=</span> <span id="s2-obs" class="k-teal">&mdash;</span></div>
+  </div>
+
+  <!-- REQ 1 -->
+  <div class="card purple">
+    <div class="hd purple">requirement 1 &mdash; independence / closure <span class="eqtag">Eq 2.3&ndash;2.5</span></div>
+    <p>Closure holds iff the two Bernoulli cuts are independent for background &mdash; equivalently, the background 2&times;2 <b>odds ratio is 1</b>. The exact correction ABCD needs is that odds ratio:</p>
+    <div class="eq">
+      &kappa;<sub>need</sub> <span class="op">=</span> <span class="frac"><span class="num"><span class="mvar">N</span><sub>A</sub><sup>obs</sup></span><span class="den"><span class="mvar">N</span><sub>A</sub><sup>pred</sup></span></span> <span class="op">=</span> <span class="frac"><span class="num"><span class="mvar">N</span><sub>A</sub><span class="mvar">N</span><sub>D</sub></span><span class="den"><span class="mvar">N</span><sub>B</sub><span class="mvar">N</span><sub>C</sub></span></span> <span class="op">&equiv;</span> OR<sub>bg</sub>
+    </div>
+    <div class="vrow">
+      <div class="vpill hi"><div class="lab">OR<sub>bg</sub> = &kappa;<sub>need</sub></div><div class="val" id="s2-or">&mdash;</div></div>
+      <div class="vpill"><div class="lab">closure dev</div><div class="val" id="s2-dev">&mdash; <small>&sigma;</small></div></div>
+      <div class="vpill"><div class="lab">debiased MI</div><div class="val" id="s2-mi">&mdash; <small>bits</small></div></div>
+      <div class="vpill"><div class="lab">MI signif. / mean|pmi|</div><div class="val" id="s2-misig">&mdash;</div></div>
+    </div>
+    <p class="note"><b>Two complementary independence reads.</b> OR<sub>bg</sub> is the <b>local</b>, exact condition at <i>this</i> cut (= 1 means ABCD closes here). Debiased <span class="mvar">I</span>(NN1;NN2) is the <b>threshold-independent</b> necessary condition: <span class="mvar">I</span>=0 &hArr; ABCD closes at <i>every</i> cut. They are complementary, not redundant &mdash; a globally dependent plane (<span class="mvar">I</span>&gt;0) can still have OR<sub>bg</sub>&asymp;1 at a particular cut. <span id="s2-mi-note"></span></p>
+  </div>
+
+  <!-- REQ 2 -->
+  <div class="card orange">
+    <div class="hd orange">requirement 2 &mdash; normalized signal contamination <span class="eqtag">Eq 2.7&ndash;2.9</span></div>
+    <p>It is not enough that the signal fraction in each control is small (<span class="mvar">&delta;</span><sub>i</sub>&#8810;1, Eq 2.7). It must be small <b>relative to the signal fraction in A</b>. The paper's normalized contamination:</p>
+    <div class="eq">
+      <span class="mvar">r</span> <span class="op">=</span> <span class="mvar">&delta;</span><sub>A</sub><sup>&minus;1</sup><span class="op">(</span><span class="mvar">&delta;</span><sub>B</sub> <span class="op">+</span> <span class="mvar">&delta;</span><sub>C</sub> <span class="op">&minus;</span> <span class="mvar">&delta;</span><sub>D</sub><span class="op">)</span>,
+      &nbsp; <span class="mvar">&delta;</span><sub>i</sub> <span class="op">=</span> <span class="frac"><span class="num"><span class="mvar">N</span><sub>i,s</sub></span><span class="den"><span class="mvar">N</span><sub>i,b</sub></span></span>,
+      &nbsp; require <span class="op">|</span><span class="mvar">r</span><span class="op">|</span> &#8810; 1
+    </div>
+    <p class="note">Per HSS mass point, mirroring the paper's Table II (<span class="mvar">&delta;</span><sub>i</sub> per region, then <span class="mvar">r</span>). <span class="mvar">&delta;</span><sub>D</sub> enters negative (diagonally opposite, doubly suppressed) so <span class="mvar">r</span>&gt;0 &rArr; background <b>over</b>-prediction.</p>
+    <table id="s2-mass-tbl">
+      <thead><tr>
+        <th>mass</th><th>&delta;<sub>A</sub></th><th>&delta;<sub>B</sub></th><th>&delta;<sub>C</sub></th><th>&delta;<sub>D</sub></th><th>r</th><th>|r|&#8810;1 ?</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="note" style="margin-top:10px"><span class="k-orange">r is method-invariant.</span> MaxEnt swaps the predictor on a fixed plane; it cannot change any <span class="mvar">&delta;</span><sub>i</sub>. So this entire requirement is shared identically by ABCD and MaxEnt &mdash; which is exactly why MaxEnt cannot be placed on ABCDisCo's rejection-vs-<span class="mvar">r</span> plane.</p>
+  </div>
+
+  <!-- BIAS EXPANSION Eq 2.10 -->
+  <div class="card">
+    <div class="hd" style="color:#c2691a">what the contamination costs &mdash; signal absorbed by ABCD's own prediction <span class="eqtag">Eq 2.10</span></div>
+    <p>Expanding the prediction with signal present in all four regions:</p>
+    <div class="eq"><span class="mvar">N</span><sub>A</sub><sup>pred</sup> <span class="op">=</span> <span class="mvar">N</span><sub>A,b</sub><span class="op">(</span>1 <span class="op">+</span> <span class="mvar">&delta;</span><sub>B</sub> <span class="op">+</span> <span class="mvar">&delta;</span><sub>C</sub> <span class="op">&minus;</span> <span class="mvar">&delta;</span><sub>D</sub><span class="op">)</span> <span class="op">=</span> <span class="mvar">N</span><sub>A,b</sub><span class="op">(</span>1 <span class="op">+</span> <span class="mvar">&delta;</span><sub>A</sub><span class="mvar">r</span><span class="op">)</span></div>
+    <p>The contamination folds straight into the background estimate, so the signal excess that <i>survives</i> ABCD's own prediction is &prop; <span class="op">(</span>1 <span class="op">&minus;</span> <span class="mvar">r</span><span class="op">)</span>. The bar shows the fraction of each signal's A-region excess that ABCD <b>absorbs</b> as background:</p>
+    <table id="s2-absorb-tbl">
+      <thead><tr><th>mass</th><th>r</th><th style="text-align:left;padding-left:18px">absorbed into background</th><th>excess surviving</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="note" style="margin-top:8px">r&gt;1 (light scalars here) means <b>total absorption</b>: ABCD predicts at or above the observed A-count even with signal present &mdash; no discoverable excess remains. Published illustration (ABCDisCo Fig 2): at <span class="mvar">&delta;</span><sub>A</sub>=10%, <span class="mvar">N</span><sub>A</sub>=1000, the true <span class="mvar">p</span>-value 0.0015 inflates to <span id="s2-ref-4">0.03</span> / <span id="s2-ref-6">0.10</span> with only 4% / 6% contamination in B &mdash; potential discoveries masked.</p>
+  </div>
+
+  <!-- SYNTHESIS -->
+  <div class="card teal">
+    <div class="hd teal">&#9656; one object underneath both: the 2&times;2 odds ratio</div>
+    <p>Requirement 1 is the odds ratio on <b>background</b> (OR<sub>bg</sub> &mdash; closure). Requirement 2's <span class="mvar">r</span> is, via the paper's Eq 2.12, nearly the <b>diagnostic odds ratio</b> on <b>signal</b>. Both ABCD failure modes are the same 2&times;2 statement evaluated on the two sample types &mdash; which is why our information-theory stats layer (cell odds ratios, debiased MI, PMI) is the native language for this section, not a re-skin.</p>
+    <div class="eq" style="font-size:14px">
+      <span class="k-purple">REQ 1</span>: OR on background <span class="op">&rarr;</span> closure &nbsp;<span class="op">|</span>&nbsp; <span class="k-orange">REQ 2</span>: odds structure on signal <span class="op">&rarr;</span> <span class="mvar">r</span>
+    </div>
+    <p class="note">MaxEnt acts on REQ 1 only. The full method comparison (next) therefore compares ABCD vs MaxEnt on the closure axis, with <span class="mvar">r</span> reported alongside as a shared property of the cut.</p>
+  </div>
+
+  <div id="s2-status" class="loading">loading reconstruction&hellip;</div>
+</div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  let region = "endcap";
+
+  function fmt(v, d){ if(v===null||v===undefined||!isFinite(v)) return "&mdash;"; return Number(v).toFixed(d===undefined?3:d); }
+
+  function cell(nm, ct, cls){
+    return '<div class="cell '+(cls||'')+'"><div class="nm">'+nm+'</div><div class="ct">'+ct+'</div></div>';
+  }
+
+  function drawABCD(bg){
+    // layout:    NN2>cy   NN2<=cy
+    //  NN1>cx       A         C
+    //  NN1<=cx      B         D     (B = x>cx? no) -- use HELIX defn: A x>cx,y>cy ; B x>cx,y<=cy ; C x<=cx,y>cy ; D x<=cx,y<=cy
+    const g = $("#s2-abcd");
+    g.innerHTML =
+      '<div class="ax"></div><div class="ax">NN2 &gt; c<sub>y</sub></div><div class="ax">NN2 &le; c<sub>y</sub></div>'+
+      '<div class="ax">NN1 &gt; c<sub>x</sub></div>'+ cell('A &middot; signal', bg.A, 'A') + cell('B', bg.B) +
+      '<div class="ax">NN1 &le; c<sub>x</sub></div>'+ cell('C', bg.C) + cell('D', bg.D);
+  }
+
+  function massRow(m){
+    if(m.error) return '<tr><td>'+m.mass+'</td><td colspan="6" style="color:#c2384e">'+m.error+'</td></tr>';
+    const v = (m.norm_ok)
+      ? '<span class="verdict ok">|r|&lt;0.1</span>'
+      : '<span class="verdict bad">|r|='+fmt(Math.abs(m.r),2)+'</span>';
+    return '<tr><td>'+m.mass+'</td>'+
+      '<td>'+fmt(m.dA,2)+'</td><td>'+fmt(m.dB,4)+'</td><td>'+fmt(m.dC,2)+'</td><td>'+fmt(m.dD,4)+'</td>'+
+      '<td class="r">'+fmt(m.r,3)+'</td><td>'+v+'</td></tr>';
+  }
+
+  function absorbRow(m){
+    if(m.error) return '';
+    const r = m.r; if(r===null||!isFinite(r)) return '<tr><td>'+m.mass+'</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>';
+    const pct = Math.max(0, Math.min(100, r*100));
+    const over = r>1;
+    const bar = '<div class="bar"><i class="'+(over?'over':'')+'" style="width:'+pct+'%"></i></div>';
+    const surv = over ? '<span style="color:#c2384e">total (r&gt;1)</span>' : fmt((1-r)*100,1)+'%';
+    return '<tr><td>'+m.mass+'</td><td class="r">'+fmt(r,3)+'</td>'+
+      '<td style="padding-left:18px">'+bar+' <span style="color:#8a8a96">'+fmt(r*100,1)+'%</span></td>'+
+      '<td>'+surv+'</td></tr>';
+  }
+
+  function render(d){
+    $("#s2-cut").innerHTML = 'cut &middot; ('+d.cut[0]+', '+d.cut[1]+')';
+    $("#s2-axes").innerHTML = 'axes &middot; '+d.axes.x+' &times; '+d.axes.y;
+    $("#s2-nbg").innerHTML = 'N<sub>bg</sub> &middot; '+d.N_bg.toLocaleString();
+    // degenerate-cut guard: empty A in background → closure/r undefined
+    const degen = (d.bg.A===0 || d.bg.OR_bg===null || !isFinite(d.bg.OR_bg) || d.bg.OR_bg===0);
+    if(degen){
+      $("#s2-degen").style.display = "block";
+      $("#s2-degen-body").innerHTML =
+        'At the configured '+d.region+' cut ('+d.cut[0]+', '+d.cut[1]+') the background signal region holds '+
+        '<b>N<sub>A</sub> = '+d.bg.A+'</b> events, so OR<sub>bg</sub>, &kappa;<sub>need</sub> and every per-mass '+
+        '<span class="mvar">r</span> (which divides by &delta;<sub>A</sub> = N<sub>A,s</sub>/N<sub>A,b</sub>) are undefined here. '+
+        'Loosen this region\u2019s cut in config (or via the dashboard) to populate A before reading Section II for '+d.region+'. '+
+        'The endcap at (0.8, 0.8) is the physics working point.';
+    } else {
+      $("#s2-degen").style.display = "none";
+    }
+    drawABCD(d.bg);
+    $("#s2-pred").innerHTML = fmt(d.bg.abcd_pred,1)+' &plusmn; '+fmt(d.bg.abcd_pred_err,1);
+    $("#s2-obs").innerHTML = d.bg.A;
+    $("#s2-or").innerHTML = fmt(d.bg.OR_bg,3);
+    $("#s2-dev").innerHTML = fmt(d.bg.dev_sigma,2)+' <small>&sigma;</small>';
+    $("#s2-mi").innerHTML = fmt(d.mi.I_debiased,4)+' <small>bits</small>';
+    $("#s2-misig").innerHTML = fmt(d.mi.sigma,1)+'&sigma; / '+fmt(d.mi.mean_abs_pmi,3);
+    // honest MI note: significant but tiny magnitude
+    const inflated = (Math.abs(d.mi.sigma)>5 && d.mi.mean_abs_pmi<0.15);
+    $("#s2-mi-note").innerHTML = inflated
+      ? 'Here <span class="mvar">I</span> is statistically significant ('+fmt(d.mi.sigma,1)+'&sigma;) but tiny in magnitude (mean|pmi|='+fmt(d.mi.mean_abs_pmi,3)+') &mdash; an N-inflated significance; the <b>local</b> OR<sub>bg</sub> governs closure at this cut.'
+      : '';
+    $("#s2-mass-tbl tbody").innerHTML = d.masses.map(massRow).join("");
+    $("#s2-absorb-tbl tbody").innerHTML = d.masses.map(absorbRow).join("");
+    if(d.ref){ $("#s2-ref-4").textContent = d.ref.p_4pct; $("#s2-ref-6").textContent = d.ref.p_6pct; }
+    $("#s2-status").style.display = "none";
+  }
+
+  function load(){
+    $("#s2-status").style.display = "block";
+    $("#s2-status").className = "loading";
+    $("#s2-status").innerHTML = "loading reconstruction&hellip;";
+    fetch("/api/sec2?region="+region)
+      .then(r=>r.json())
+      .then(j=>{ if(j.error){ $("#s2-status").className="err"; $("#s2-status").textContent="error: "+j.error; return;} render(j.data); })
+      .catch(e=>{ $("#s2-status").className="err"; $("#s2-status").textContent="fetch failed: "+e; });
+  }
+
+  document.querySelectorAll("#s2-region button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      document.querySelectorAll("#s2-region button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on"); region = b.dataset.r; load();
+    });
+  });
+  load();
+})();
+</script>
