@@ -1,0 +1,66 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>cern twiki</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/helix.css?v=12">
+<link rel="stylesheet" href="/static/css/lightpage.css?v=12">
+<style>
+  .lnk{display:block;margin:10px 0;padding:13px 15px;
+       background:#0a0e14;border:1px solid rgba(0,229,255,.30);
+       border-radius:8px;text-decoration:none;transition:border-color .15s,background .15s}
+  .lnk:hover{border-color:rgba(0,229,255,.85);background:#0d1219}
+  .lnk .t{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:.04em;color:#3df0ff}
+  .lnk .u{font-family:'Share Tech Mono',monospace;font-size:11px;color:#7fb0bd;word-break:break-all}
+  .lnk .d{font-size:12.5px;line-height:1.5;margin-top:5px;color:#d6e6ea}
+  .tag{font-family:'Share Tech Mono',monospace;font-size:10px;border:1px solid rgba(224,168,90,.6);
+       color:#f0bd72;border-radius:4px;padding:1px 5px;margin-left:6px}
+</style>
+</head><body>
+<div class="lightpage">
+  <header class="lp-head">
+    <div class="kicker">HELIX · MAXENT · ABCD</div>
+    <h1>CERN — official ABCD documentation</h1>
+    <p class="lead">Primary references for the ABCD method and its likelihood (modified) form, as documented by the LHC collaborations and the statistics-tools maintainers. These are the canonical procedures the dashboard's diagnostics reconstruct.</p>
+  </header>
+
+  <section><h2>Fitting tools (modified / likelihood ABCD)</h2>
+    <a class="lnk" href="https://twiki.cern.ch/twiki/bin/view/AtlasProtected/TRooFit" target="_blank" rel="noopener">
+      <div class="t">TRooFit / TRooABCD — ATLAS<span class="tag">login may be required</span></div>
+      <div class="u">twiki.cern.ch/twiki/bin/view/AtlasProtected/TRooFit</div>
+      <div class="d">Buttinger's RooFit-based ABCD fitter. Walks the simultaneous fit with signal strength fixed at 0 vs. floated, plus validation-region non-closure as a systematic. The clearest procedural reference for the modified method.</div>
+    </a>
+    <a class="lnk" href="https://twiki.cern.ch/twiki/bin/view/RooStats/WebHome" target="_blank" rel="noopener">
+      <div class="t">RooStats</div>
+      <div class="u">twiki.cern.ch/twiki/bin/view/RooStats/WebHome</div>
+      <div class="d">The statistical toolkit underlying the likelihood ABCD fits — model building, profile likelihood, hypothesis tests.</div>
+    </a>
+  </section>
+
+  <section><h2>Public results indexes (ABCD in context)</h2>
+    <a class="lnk" href="https://twiki.cern.ch/twiki/bin/view/AtlasPublic/ExoticsPublicResults" target="_blank" rel="noopener">
+      <div class="t">ATLAS Exotics — Public Results</div>
+      <div class="u">twiki.cern.ch/twiki/bin/view/AtlasPublic/ExoticsPublicResults</div>
+      <div class="d">Search index where ABCD background estimation appears throughout (dijet, LLP, displaced-vertex analyses).</div>
+    </a>
+    <a class="lnk" href="https://twiki.cern.ch/twiki/bin/view/CMSPublic/PhysicsResultsEXO" target="_blank" rel="noopener">
+      <div class="t">CMS Exotica — Public Results</div>
+      <div class="u">twiki.cern.ch/twiki/bin/view/CMSPublic/PhysicsResultsEXO</div>
+      <div class="d">CMS counterpart; ABCD and ABCDnn data-driven estimates across BSM searches.</div>
+    </a>
+  </section>
+
+  <section><h2>Reinterpretation / data preservation</h2>
+    <a class="lnk" href="https://www.hepdata.net/" target="_blank" rel="noopener">
+      <div class="t">HEPData</div>
+      <div class="u">hepdata.net</div>
+      <div class="d">Published cell counts, closure tables, and per-region histograms behind ABCD analyses. Summary-level (not event-level) — the right source for validating ABCD arithmetic against known results.</div>
+    </a>
+    <a class="lnk" href="https://rivet.hepforge.org/" target="_blank" rel="noopener">
+      <div class="t">Rivet</div>
+      <div class="u">rivet.hepforge.org</div>
+      <div class="d">Analysis-preservation routines often shipped alongside HEPData records for reinterpretation.</div>
+    </a>
+  </section>
+
+  <div class="lp-note">Note: some ATLAS/CMS TWiki pages sit behind CERN authentication. Links to AtlasProtected require a CERN login; public-results and HEPData links are open.</div>
+</div>
+</body></html>

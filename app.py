@@ -137,6 +137,14 @@ def page_theory():
 def page_sec2():
     return render_template("sec2.html")
 
+@app.route("/twiki")
+def twiki():
+    return render_template("twiki.html")
+
+@app.route("/sources")
+def sources():
+    return render_template("sources.html")
+
 @app.route("/topology")
 def page_topology():
     return render_template("topology.html")

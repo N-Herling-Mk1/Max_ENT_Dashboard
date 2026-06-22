@@ -1,0 +1,101 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>data sources</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/helix.css?v=12">
+<link rel="stylesheet" href="/static/css/lightpage.css?v=12">
+<style>
+  .ds{background:#0a0e14;border:1px solid rgba(0,229,255,.30);border-radius:10px;padding:18px;margin:14px 0}
+  .ds h3{font-family:'Orbitron',sans-serif;font-size:14px;color:#3df0ff;margin:0 0 4px}
+  .ds .sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:#7fb0bd;margin-bottom:10px}
+  .ds .meta{display:grid;grid-template-columns:130px 1fr;gap:5px 12px;font-size:12.5px;margin:8px 0;color:#d6e6ea}
+  .ds .meta .k{font-family:'Share Tech Mono',monospace;color:#f0bd72}
+  .flist{margin-top:10px}
+  .frow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;
+        font-family:'Share Tech Mono',monospace;font-size:11.5px;padding:6px 0;color:#d6e6ea;
+        border-top:1px solid rgba(255,255,255,.08)}
+  .frow .nm{color:#e6f6fa}.frow .sz{color:#8fa0a6}
+  .frow a{color:#3dff6e;text-decoration:none}.frow a:hover{text-decoration:underline}
+  .md5{font-size:10.5px;color:#7a8a90;word-break:break-all}
+  .prov{font-size:11.5px;line-height:1.5;color:#cbd9dd;margin-top:8px;border-left:2px solid rgba(224,168,90,.6);padding-left:10px}
+  .lic{font-family:'Share Tech Mono',monospace;font-size:10px;color:#6a7a80;margin-top:6px}
+  .lnks{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+  .lnks a{font-family:'Share Tech Mono',monospace;font-size:11px;color:#3df0ff;text-decoration:none;
+          background:#0d1219;border:1px solid rgba(0,229,255,.30);border-radius:6px;padding:5px 9px;transition:border-color .15s}
+  .lnks a:hover{border-color:rgba(0,229,255,.85)}
+  .lnks .grp{width:100%;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:.08em;color:#7fb0bd;margin-top:6px}
+</style>
+</head><body>
+<div class="lightpage">
+  <header class="lp-head">
+    <div class="kicker">HELIX · MAXENT · ABCD</div>
+    <h1>Data sources &amp; provenance</h1>
+    <p class="lead">Registered datasets available to the bench, with full generation provenance. Each entry records the generator, detector simulation, format, and integrity checksums so any result is traceable to its source.</p>
+  </header>
+
+  <div class="ds">
+    <h3>LHC Olympics 2020 — R&amp;D dataset</h3>
+    <div class="sub">Kasieczka, Nachman, Shih · DOI 10.5281/zenodo.4536377 · CC-BY-4.0</div>
+    <div class="meta">
+      <span class="k">process</span><span>QCD dijet background (1.0M) + W&prime;&rarr;XY, X,Y&rarr;qq signal (0.1M)</span>
+      <span class="k">masses</span><span>m(W&prime;)=3.5 TeV, m(X)=500 GeV, m(Y)=100 GeV</span>
+      <span class="k">generator</span><span>Pythia8 &middot; no pileup, no MPI</span>
+      <span class="k">detector</span><span>Delphes 3.4.1 (fast sim) &middot; fat-jet R=1 trigger, p<sub>T</sub>&gt;1.2 TeV</span>
+      <span class="k">type</span><span>simulation (reco-level), truth label included</span>
+    </div>
+    <div class="flist">
+      <div class="frow"><span class="nm">events_anomalydetection_v2.features.h5</span><span class="sz">74.3 MB</span>
+        <a href="https://zenodo.org/records/4536377/files/events_anomalydetection_v2.features.h5?download=1" target="_blank" rel="noopener">get</a></div>
+      <div class="frow"><span class="md5">md5 271cf5e71fc756b2a8d2b32730689bdb &mdash; clustered jet features + label (ABCD plane substrate)</span><span></span><span></span></div>
+      <div class="frow"><span class="nm">events_anomalydetection.h5</span><span class="sz">2.8 GB</span>
+        <a href="https://zenodo.org/records/4536377/files/events_anomalydetection.h5?download=1" target="_blank" rel="noopener">get</a></div>
+      <div class="frow"><span class="md5">md5 a06c71ae36cbd4de6699a490c06b94b7 &mdash; raw particle-level (700&times;3) for NN / ABCDisCo training</span><span></span><span></span></div>
+    </div>
+    <div class="prov">Provenance files on record: delphes_card_RnD.dat, pythia_RnD_qcd.cmnd, pythia_RnD_Z_XY_qq.cmnd — generator config + detector card, re-runnable to the distribution.</div>
+    <div class="lic">record: zenodo.org/records/4536377 &middot; v4 &middot; verified OK on import</div>
+
+    <div class="lnks">
+      <div class="grp">CHALLENGE HOME &amp; DOCS</div>
+      <a href="https://lhco2020.github.io/homepage/" target="_blank" rel="noopener">LHCO 2020 homepage</a>
+      <a href="https://lhco2020.github.io/homepage/RnD.html" target="_blank" rel="noopener">R&amp;D phase page</a>
+      <a href="https://github.com/LHCO2020/homepage" target="_blank" rel="noopener">homepage repo</a>
+      <a href="https://github.com/lhcolympics2020/parsingscripts" target="_blank" rel="noopener">official parsing scripts</a>
+
+      <div class="grp">DATA RECORDS (ZENODO)</div>
+      <a href="https://doi.org/10.5281/zenodo.4536377" target="_blank" rel="noopener">R&amp;D set (10.5281/zenodo.4536377)</a>
+      <a href="https://doi.org/10.5281/zenodo.2629072" target="_blank" rel="noopener">benchmark bkg + signal (2629072)</a>
+      <a href="https://doi.org/10.5281/zenodo.3547721" target="_blank" rel="noopener">black boxes (3547721)</a>
+
+      <div class="grp">REFERENCE PAPER</div>
+      <a href="https://arxiv.org/abs/2101.08320" target="_blank" rel="noopener">arXiv:2101.08320 (community challenge)</a>
+      <a href="https://inspirehep.net/literature/1842125" target="_blank" rel="noopener">Inspire record (full citing list)</a>
+
+      <div class="grp">METHOD PAPERS USING THIS DATA</div>
+      <a href="https://arxiv.org/abs/2001.04990" target="_blank" rel="noopener">ANODE: density estimation</a>
+      <a href="https://arxiv.org/abs/2001.05001" target="_blank" rel="noopener">SALAD: sim-assisted LFI</a>
+      <a href="https://arxiv.org/abs/2009.02205" target="_blank" rel="noopener">SA decorrelation (CWoLa)</a>
+      <a href="https://arxiv.org/abs/2104.02092" target="_blank" rel="noopener">weak vs unsupervised compare</a>
+      <a href="https://arxiv.org/abs/2002.12376" target="_blank" rel="noopener">Tag N' Train</a>
+
+      <div class="grp">COMMUNITY</div>
+      <a href="https://indico.cern.ch/event/809820/sessions/329216/" target="_blank" rel="noopener">ML4Jets 2020 (Winter results)</a>
+      <a href="http://indico.desy.de/indico/e/anomaly2020" target="_blank" rel="noopener">Anomaly 2020 (Summer)</a>
+    </div>
+  </div>
+
+  <div class="ds" style="opacity:.6">
+    <h3>HEPData — published ABCD records <span style="font-family:'Share Tech Mono';font-size:10px;color:#e0a85a">SUMMARY-LEVEL</span></h3>
+    <div class="sub">cell counts &amp; closure tables only — no event-level data</div>
+    <div class="flist">
+      <div class="frow"><span class="nm">CMS WH-via-VBS (record 151278) — ABCD yields + per-region MSD histograms</span><span></span>
+        <a href="https://www.hepdata.net/record/ins2790366" target="_blank" rel="noopener">view</a></div>
+      <div class="frow"><span class="nm">ATLAS paired-dijet RPV (record 79059) — cutflows / SR yields (no ABCD table)</span><span></span>
+        <a href="https://www.hepdata.net/record/79059" target="_blank" rel="noopener">view</a></div>
+      <div class="frow"><span class="nm">ATLAS collimated-leptons LLP (1909.01246) — 4-region counts + VR sub-division</span><span></span>
+        <a href="https://www.hepdata.net/record/ins1724682" target="_blank" rel="noopener">view</a></div>
+    </div>
+    <div class="prov">Use for validating count-level entropy quantities (&kappa;_need, closure) against published results. Cannot drive a self-built plane — no events.</div>
+  </div>
+
+  <div class="lp-note">Datasets marked SUMMARY-LEVEL provide tables only. Event-level planes (ABCD / MaxEnt / DisCo) require a per-event source — currently the LHCO R&amp;D set.</div>
+</div>
+</body></html>
