@@ -1,0 +1,121 @@
+================================================================================
+ HELIX / Max_ENT_Dashboard  —  LHCO DATA SETUP & GIT FIX
+ Drop this file in the repo root. Follow top to bottom.
+================================================================================
+
+WHY: The LHCO raw file is 2.6 GB — past GitHub's 100 MB hard limit. Git LFS
+free tier (1 GB) won't hold it either. Standard fix: DON'T version the data.
+Git carries the fetch recipe + provenance + checksums (a few KB); Zenodo carries
+the data; you run the script wherever you land (home WSL, work machine).
+
+
+--------------------------------------------------------------------------------
+ STEP 0 — make sure your backup exists first (you have it):
+   0_Summer_26\HELIX_MaxEnt(ropy)_mk1_Stash\Max_ENT_Dashboard_pre_redesign_*.tar.gz
+ STEP 1 below rewrites git history — only proceed once the backup is verified.
+--------------------------------------------------------------------------------
+
+
+================================================================================
+ 1. DROP IN THE DATA KIT  (extract HELIX_datakit.tar.gz from repo root)
+================================================================================
+
+  tar -xzf "$env:USERPROFILE\Downloads\HELIX_datakit.tar.gz"
+
+This creates:
+  data\lhco\fetch_lhco.sh        (WSL/Linux fetch + md5 verify, resumable)
+  data\lhco\fetch_lhco.ps1       (PowerShell fetch + md5 verify, resumable)
+  data\lhco\README.md            (provenance + instructions)
+  data\lhco\checksums.md5        (integrity)
+  data\lhco\provenance\          (put your small .cmnd/.dat files here)
+  gitignore_snippet.txt          (ignore rules to append)
+
+
+================================================================================
+ 2. COPY THE SMALL PROVENANCE FILES IN  (these DO get committed — KB-sized)
+================================================================================
+
+  copy \\wsl.localhost\Ubuntu\home\nth\_Zeonodo_Particle_Physics\*.cmnd data\lhco\provenance\
+  copy \\wsl.localhost\Ubuntu\home\nth\_Zeonodo_Particle_Physics\*.dat  data\lhco\provenance\
+
+
+================================================================================
+ 3. APPEND THE IGNORE RULES
+================================================================================
+
+  Get-Content gitignore_snippet.txt | Add-Content .gitignore
+  del gitignore_snippet.txt
+  del data\lhco\provenance\PUT_PROVENANCE_HERE.txt
+
+
+================================================================================
+ 4. FIX THE PUSH  (pick the case that matches you)
+================================================================================
+
+  First, check whether the big file is already baked into a commit:
+
+    git log --all --oneline -- events_anomalydetection.h5
+
+  ---- CASE A: that prints NOTHING (file only staged, never committed) ----
+  Just untrack and commit the recipe:
+
+    git rm --cached events_anomalydetection.h5 events_anomalydetection_v2.features.h5 2>$null
+    git add .gitignore data/lhco
+    git commit -m "Add LHCO fetch recipe; stop tracking large data files"
+    git push
+
+  ---- CASE B: that prints one or more commits (file is in history) ----
+  History must be scrubbed or the push stays huge. Install the tool, then:
+
+    pip install git-filter-repo
+    git filter-repo --path events_anomalydetection.h5 --invert-paths
+    git filter-repo --path events_anomalydetection_v2.features.h5 --invert-paths
+    git add .gitignore data/lhco
+    git commit -m "Add LHCO fetch recipe; remove large data from history"
+    git push --force            # history was rewritten -> force needed
+
+  NOTE: filter-repo rewrites commit hashes. Fine for a solo repo. If anyone else
+  cloned it, they must re-clone afterward. filter-repo may also drop your 'origin'
+  remote; if push complains about no remote, re-add it:
+    git remote add origin <your-repo-url>
+    git push --force --set-upstream origin <branch>
+
+
+================================================================================
+ 5. RE-FETCH THE DATA ON ANY MACHINE  (home or work)
+================================================================================
+
+  WSL / Linux / macOS:
+    cd data/lhco
+    bash fetch_lhco.sh                 # download into data/lhco
+    bash fetch_lhco.sh ~/lhco_data     # OR a path outside the repo (recommended)
+
+  Windows PowerShell:
+    cd data\lhco
+    .\fetch_lhco.ps1                   # download into data\lhco
+    .\fetch_lhco.ps1 -Dest D:\lhco     # OR a path outside OneDrive (recommended)
+
+  Both resume partial downloads and verify MD5 after.
+
+
+================================================================================
+ ⚠ ONEDRIVE WARNING
+================================================================================
+ This repo lives under OneDrive\Desktop\0_Summer_26. If you fetch the 2.6 GB file
+ INTO the repo, OneDrive will try to upload all of it to the cloud — slow and
+ wasteful. At work especially, fetch to a NON-OneDrive path (see -Dest above) and
+ point the dashboard config at that path instead. Keep heavy data out of any
+ synced folder.
+
+
+================================================================================
+ FILE REFERENCE
+================================================================================
+  events_anomalydetection_v2.features.h5   74 MB   md5 271cf5e71fc756b2a8d2b32730689bdb
+      -> clustered jet features + label   (ABCD / MaxEnt plane)
+  events_anomalydetection.h5              2.6 GB   md5 a06c71ae36cbd4de6699a490c06b94b7
+      -> raw particle-level (700x3)       (NN / ABCDisCo training)
+
+  Source: https://zenodo.org/records/4536377  (DOI 10.5281/zenodo.4536377, CC-BY-4.0)
+  Paper:  arXiv:2101.08320   Home: https://lhco2020.github.io/homepage/
+================================================================================

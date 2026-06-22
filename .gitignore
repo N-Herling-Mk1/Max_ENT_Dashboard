@@ -2,3 +2,9 @@ __pycache__/
 *.pyc
 static/out/*.png
 .DS_Store
+
+# ---- LHCO / large data: never commit ----
+*.h5
+*.hdf5
+data/2020_Olympics_/*.h5
+data/**/*.h5
